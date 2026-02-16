@@ -153,6 +153,10 @@ Browser loads → Vite serves index.html
 
 ```
 horde-breaker/
+├── design/                             # ── DESIGN & PLANNING DOCS ──
+│   ├── DESIGN_NOTES.md                # Game design document
+│   ├── IMPLEMENTATION_DESIGN.md       # Technical architecture (this file)
+│   └── IMPLEMENTATION_PLAN.md         # Sprint-based implementation plan
 ├── index.html                          # Vite entry (mounts #root)
 ├── vite.config.ts                      # Vite + React plugin config
 ├── vitest.config.ts                    # Vitest config (extends vite)
@@ -425,8 +429,7 @@ horde-breaker/
 │       └── test-save.json             # Fixture save states for E2E
 │
 └── docs/                               # ── DOCUMENTATION ──
-    ├── DESIGN_NOTES.md                 # → symlink or copy of root
-    ├── ARCHITECTURE.md                 # → This file (or summary)
+    ├── ARCHITECTURE.md                 # Architecture summary
     ├── DATA_SCHEMA.md                  # Hero/enemy data format docs
     └── ADDING_A_HERO.md               # Step-by-step guide for content authors
 ```
