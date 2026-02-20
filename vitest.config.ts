@@ -13,12 +13,7 @@ export default mergeConfig(
         provider: 'v8',
         reporter: ['text', 'html', 'lcov'],
         include: ['src/**/*.{ts,tsx}'],
-        exclude: [
-          'src/test/**',
-          'src/**/*.d.ts',
-          'src/vite-env.d.ts',
-          'src/main.tsx',
-        ],
+        exclude: ['src/test/**', 'src/**/*.d.ts', 'src/vite-env.d.ts', 'src/main.tsx'],
         thresholds: {
           lines: 80,
         },
