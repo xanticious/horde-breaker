@@ -53,36 +53,36 @@
 
 ### Tasks
 
-- [ ] **0.1** — Initialize npm project (`npm init`), install core dependencies:
+- [x] **0.1** — Initialize npm project (`npm init`), install core dependencies:
   - `react`, `react-dom`, `xstate`, `@xstate/react`, `pixi.js`, `howler`
-- [ ] **0.2** — Install dev dependencies:
+- [x] **0.2** — Install dev dependencies:
   - `typescript`, `vite`, `@vitejs/plugin-react`, `vitest`, `jsdom`,
     `@testing-library/react`, `@testing-library/jest-dom`,
     `oxlint`, `oxlint-tsgolint`, `oxfmt`, `babel-plugin-react-compiler`,
     `@playwright/test`
-- [ ] **0.3** — Create config files:
+- [x] **0.3** — Create config files:
   - `tsconfig.json` (strict mode, path aliases, `jsx: "react-jsx"`)
   - `tsconfig.node.json`
   - `vite.config.ts` (React plugin, path alias resolution, `babel-plugin-react-compiler`)
   - `vitest.config.ts` (jsdom environment, path aliases, coverage thresholds)
   - `.oxlintrc.json` (oxlint config: TypeScript + React Hooks rules, `no-explicit-any: error`)
   - `playwright.config.ts`
-- [ ] **0.4** — Create minimal app shell:
+- [x] **0.4** — Create minimal app shell:
   - `index.html` (mounts `#root`, sets `<title>Horde Breaker</title>`)
   - `src/main.tsx` (renders `<App />`)
   - `src/App.tsx` (returns `<h1>Horde Breaker</h1>`)
   - `src/vite-env.d.ts`
-- [ ] **0.5** — Add npm scripts to `package.json`:
+- [x] **0.5** — Add npm scripts to `package.json`:
   - `dev`, `build`, `preview`, `test`, `test:run`, `test:coverage`, `lint`, `lint:fix`, `format`, `typecheck`, `test:e2e`
-- [ ] **0.6** — Write a single smoke test:
+- [x] **0.6** — Write a single smoke test:
   - `src/App.test.tsx` — renders App, asserts "Horde Breaker" text is present.
-- [ ] **0.7** — Verify all scripts pass:
+- [x] **0.7** — Verify all scripts pass:
   - `npm run build` → success, no warnings
   - `npm run typecheck` → 0 errors
   - `npm run lint` → 0 errors
   - `npm run test:run` → 1 test passes
-- [ ] **0.8** — Add `.gitignore` (node_modules, dist, coverage, playwright-report).
-- [ ] **0.9** — Initial git commit.
+- [x] **0.8** — Add `.gitignore` (node_modules, dist, coverage, playwright-report).
+- [x] **0.9** — Initial git commit.
 
 ### Acceptance Criteria
 
@@ -99,7 +99,7 @@
 
 ### Tasks
 
-- [ ] **1.1** — Create the source directory structure (empty folders, no source files yet):
+- [x] **1.1** — Create the source directory structure (empty folders, no source files yet):
 
   ```
   src/core/machines/
