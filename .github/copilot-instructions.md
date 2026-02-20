@@ -56,12 +56,14 @@ Machines are the single source of truth. React reads via `useSelector` from `@xs
 
 ```bash
 npm run dev          # Vite dev server with HMR
-npm run build        # tsc + vite build (production)
+npm run build        # oxlint type-check + vite build (production)
 npm test             # Vitest watch mode
 npm run test:run     # Vitest single run (CI)
 npm run test:e2e     # Playwright E2E tests
-npm run lint         # ESLint (flat config)
-npm run typecheck    # tsc --noEmit
+npm run lint         # oxlint (type-aware)
+npm run lint:fix     # oxlint --fix
+npm run format       # oxfmt --write
+npm run typecheck    # oxlint --type-aware --type-check
 ```
 
 ## Debugging
@@ -82,6 +84,7 @@ Use URL query params — no debug UI needed:
 
 ## Code Guidelines
 
+- **Use current docs** — Always fetch up-to-date documentation for frameworks and libraries (XState, React, PixiJS, oxlint, Vitest, etc.) via the Context7 MCP tool before implementing anything non-trivial. Library APIs change across major versions — never rely on training-data assumptions.
 - **DRY** — Don't repeat yourself. Extract shared logic into `core/systems/` pure functions or `utils/`. Data duplication belongs in `src/data/` files, not scattered across code.
 - **Comments explain _why_, not _what_** — Use comments sparingly. The code should be self-documenting through clear naming. Reserve comments for non-obvious design decisions, workarounds, or "why this approach" rationale.
 - **No `any`** — use `unknown` + type narrowing.

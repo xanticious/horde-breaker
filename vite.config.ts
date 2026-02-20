@@ -6,7 +6,13 @@ import { fileURLToPath } from 'url'
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
+  ],
 
   resolve: {
     alias: {

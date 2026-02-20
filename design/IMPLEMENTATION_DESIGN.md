@@ -1,7 +1,7 @@
 # Horde Breaker — Implementation Design
 
 > **Document version:** 1.0  
-> **Last updated:** 2026-02-15  
+> **Last updated:** 2026-02-19  
 > **Status:** Draft — awaiting review  
 > **Audience:** Developers, QA, Stakeholders  
 > **Companion:** see `DESIGN_NOTES.md` for gameplay and creative direction
@@ -99,21 +99,21 @@ Browser loads → Vite serves index.html
 
 ## 2. Tech Stack — Final Selections
 
-| Category                   | Technology                                      | Version (target)                 | Rationale                                                                                                                   |
-| -------------------------- | ----------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Language**               | TypeScript                                      | 5.4+                             | Strict mode. Full type safety across state machines, game data, React components.                                           |
-| **UI Framework**           | React                                           | 19.x                             | Component-based UI for menus/HUD. `useSyncExternalStore` and `@xstate/react` for state binding.                             |
-| **State Management**       | XState                                          | 5.x (`xstate` + `@xstate/react`) | Actor-based state machines. Game state is the machine's context + state value. Deterministic, serializable, inspectable.    |
-| **2D Rendering**           | PixiJS                                          | 8.x                              | WebGL2/WebGPU renderer. Ticker-driven game loop. Containers, Sprites, AnimatedSprite, ParticleContainer.                    |
-| **Animation**              | Pluggable (spritesheet default, Spine optional) | —                                | Interface-based; MVP ships with spritesheet `AnimatedSprite`. Spine (`@esotericsoftware/spine-pixi-v8`) can be added later. |
-| **Audio**                  | Howler.js                                       | 2.x                              | Web Audio API with HTML5 fallback. Audio sprites for SFX. Separate `Howl` instances per music track.                        |
-| **Styling**                | CSS Modules                                     | —                                | `.module.css` files co-located with components. Zero runtime cost. Scoped class names.                                      |
-| **Bundler**                | Vite                                            | 6.x                              | Near-instant HMR, native ESM, built-in TypeScript, optimized production builds.                                             |
-| **Unit/Integration Tests** | Vitest                                          | 3.x                              | Vite-native, Jest-compatible API, shares `vite.config.ts`, fast watch mode.                                                 |
-| **Component Tests**        | Vitest + React Testing Library                  | —                                | `@testing-library/react` for React component assertions.                                                                    |
-| **E2E Tests**              | Playwright                                      | latest                           | Cross-browser, auto-waiting, screenshot comparison for visual regression.                                                   |
-| **Linting**                | ESLint (flat config) + Prettier                 | —                                | `@typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-import`.                                                  |
-| **Package Manager**        | npm                                             | 10.x                             | Lockfile-based, CI-friendly.                                                                                                |
+| Category                   | Technology                                      | Version (target)                 | Rationale                                                                                                                                                                            |
+| -------------------------- | ----------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Language**               | TypeScript                                      | 5.4+                             | Strict mode. Full type safety across state machines, game data, React components.                                                                                                    |
+| **UI Framework**           | React                                           | 19.x                             | Component-based UI for menus/HUD. `useSyncExternalStore` and `@xstate/react` for state binding.                                                                                      |
+| **State Management**       | XState                                          | 5.x (`xstate` + `@xstate/react`) | Actor-based state machines. Game state is the machine's context + state value. Deterministic, serializable, inspectable.                                                             |
+| **2D Rendering**           | PixiJS                                          | 8.x                              | WebGL2/WebGPU renderer. Ticker-driven game loop. Containers, Sprites, AnimatedSprite, ParticleContainer.                                                                             |
+| **Animation**              | Pluggable (spritesheet default, Spine optional) | —                                | Interface-based; MVP ships with spritesheet `AnimatedSprite`. Spine (`@esotericsoftware/spine-pixi-v8`) can be added later.                                                          |
+| **Audio**                  | Howler.js                                       | 2.x                              | Web Audio API with HTML5 fallback. Audio sprites for SFX. Separate `Howl` instances per music track.                                                                                 |
+| **Styling**                | CSS Modules                                     | —                                | `.module.css` files co-located with components. Zero runtime cost. Scoped class names.                                                                                               |
+| **Bundler**                | Vite                                            | 6.x                              | Near-instant HMR, native ESM, built-in TypeScript, optimized production builds.                                                                                                      |
+| **Unit/Integration Tests** | Vitest                                          | 3.x                              | Vite-native, Jest-compatible API, shares `vite.config.ts`, fast watch mode.                                                                                                          |
+| **Component Tests**        | Vitest + React Testing Library                  | —                                | `@testing-library/react` for React component assertions.                                                                                                                             |
+| **E2E Tests**              | Playwright                                      | latest                           | Cross-browser, auto-waiting, screenshot comparison for visual regression.                                                                                                            |
+| **Linting**                | oxlint + oxfmt                                  | —                                | Native TypeScript, React Hooks, and import rules — no plugins required. Type-aware linting via `oxlint-tsgolint`. React Compiler auto-memoization via `babel-plugin-react-compiler`. |
+| **Package Manager**        | npm                                             | 10.x                             | Lockfile-based, CI-friendly.                                                                                                                                                         |
 
 ### 2.1 Key npm Dependencies
 
@@ -134,12 +134,12 @@ Browser loads → Vite serves index.html
     "vitest": "^3.0.0",
     "@testing-library/react": "^16.0.0",
     "@testing-library/jest-dom": "^6.0.0",
-    "playwright": "^1.50.0",
-    "@playwright/test": "^1.50.0",
-    "eslint": "^9.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "prettier": "^3.0.0",
-    "jsdom": "^25.0.0",
+    "@playwright/test": "^1.58.0",
+    "oxlint": "^1.49.0",
+    "oxlint-tsgolint": "^0.14.0",
+    "oxfmt": "^0.34.0",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "jsdom": "^28.0.0",
   },
 }
 ```
@@ -162,8 +162,7 @@ horde-breaker/
 ├── vitest.config.ts                    # Vitest config (extends vite)
 ├── tsconfig.json                       # Strict TS config
 ├── tsconfig.node.json                  # Node-side TS (configs, scripts)
-├── eslint.config.js                    # Flat ESLint config
-├── .prettierrc                         # Prettier rules
+├── .oxlintrc.json                      # oxlint config (linting + type-aware rules)
 ├── playwright.config.ts               # Playwright E2E config
 ├── package.json
 │
@@ -493,7 +492,7 @@ horde-breaker/
 
 ### 4.3 Code Organization Rules
 
-1. **No circular imports.** Enforce via ESLint `import/no-cycle`. The dependency graph is strictly layered:  
+1. **No circular imports.** The dependency graph is strictly layered and enforced by code review and the `import/no-cycle` oxlint rule:  
    `types` ← `data` ← `core/systems` ← `core/machines` ← `rendering` / `ui`
 
 2. **Co-locate tests.** Every `.ts` file has a sibling `.test.ts`. No separate `__tests__/` directories.
@@ -506,12 +505,12 @@ horde-breaker/
 
    ```typescript
    export const BARBARIAN_UPGRADES = {
-     maxHealth: { name: 'Max Health', costs: [18, 40, 100, 220, 450] },
+     maxHealth: { name: "Max Health", costs: [18, 40, 100, 220, 450] },
      // ...
    } as const satisfies Record<string, UpgradeCategoryData>;
    ```
 
-6. **No `any`.** Use `unknown` + type narrowing instead. ESLint rule: `@typescript-eslint/no-explicit-any: error`.
+6. **No `any`.** Use `unknown` + type narrowing instead. oxlint rule: `@typescript-eslint/no-explicit-any: error`.
 
 7. **Prefer composition over inheritance.** Entity behaviors are composed from interfaces and strategy objects, not class hierarchies.
 
@@ -558,7 +557,7 @@ GameActor (root)                        ← Lives for app lifetime
 
 ```typescript
 // Simplified type signature — full implementation in gameMachine.ts
-import { createMachine, assign } from 'xstate';
+import { createMachine, assign } from "xstate";
 
 type GameContext = {
   saveData: SaveData;
@@ -568,60 +567,60 @@ type GameContext = {
 };
 
 type GameEvent =
-  | { type: 'START_GAME' }
-  | { type: 'SELECT_HERO'; heroId: HeroId; chapter: ChapterId }
-  | { type: 'START_RUN' }
-  | { type: 'RUN_COMPLETE'; result: RunResult }
+  | { type: "START_GAME" }
+  | { type: "SELECT_HERO"; heroId: HeroId; chapter: ChapterId }
+  | { type: "START_RUN" }
+  | { type: "RUN_COMPLETE"; result: RunResult }
   | {
-      type: 'PURCHASE_UPGRADE';
+      type: "PURCHASE_UPGRADE";
       heroId: HeroId;
       category: string;
       level: number;
     }
-  | { type: 'CONTINUE_TO_UPGRADE' }
-  | { type: 'RETURN_TO_HERO_SELECT' }
-  | { type: 'PRESTIGE'; heroId: HeroId }
-  | { type: 'RESET_ALL' }
-  | { type: 'IMPORT_SAVE'; data: SaveData };
+  | { type: "CONTINUE_TO_UPGRADE" }
+  | { type: "RETURN_TO_HERO_SELECT" }
+  | { type: "PRESTIGE"; heroId: HeroId }
+  | { type: "RESET_ALL" }
+  | { type: "IMPORT_SAVE"; data: SaveData };
 
 export const gameMachine = createMachine({
-  id: 'game',
-  initial: 'titleScreen',
+  id: "game",
+  initial: "titleScreen",
   context: {
     /* ... */
   },
   states: {
     titleScreen: {
-      on: { START_GAME: 'heroSelect' },
+      on: { START_GAME: "heroSelect" },
     },
     heroSelect: {
-      on: { SELECT_HERO: { target: 'run', actions: 'assignSelectedHero' } },
+      on: { SELECT_HERO: { target: "run", actions: "assignSelectedHero" } },
     },
     cinematic: {
       // Auto-transitions to 'run' after cinematic completes
-      after: { CINEMATIC_DURATION: 'run' },
+      after: { CINEMATIC_DURATION: "run" },
     },
     run: {
       // Spawns a RunActor as a child
       invoke: {
-        id: 'runActor',
-        src: 'runMachine',
+        id: "runActor",
+        src: "runMachine",
         input: ({ context }) => ({
           heroId: context.selectedHeroId,
           chapter: context.selectedChapter,
           upgrades: context.saveData.heroes[context.selectedHeroId].upgrades,
         }),
-        onDone: { target: 'results', actions: 'assignRunResult' },
+        onDone: { target: "results", actions: "assignRunResult" },
       },
     },
     results: {
-      on: { CONTINUE_TO_UPGRADE: 'upgrade' },
+      on: { CONTINUE_TO_UPGRADE: "upgrade" },
     },
     upgrade: {
       on: {
-        PURCHASE_UPGRADE: { actions: 'applyUpgrade' },
-        START_RUN: 'run',
-        RETURN_TO_HERO_SELECT: 'heroSelect',
+        PURCHASE_UPGRADE: { actions: "applyUpgrade" },
+        START_RUN: "run",
+        RETURN_TO_HERO_SELECT: "heroSelect",
       },
     },
     prestige: {
@@ -662,7 +661,7 @@ type RunContext = {
   coinsCollected: CoinId[];
   enemiesDefeated: number;
   duelDamageDealt: number;
-  phase: 'traversal' | 'duel';
+  phase: "traversal" | "duel";
   rngSeed: number; // For deterministic replay
 };
 ```
@@ -695,7 +694,7 @@ type TraversalContext = {
   coins: CoinInstance[]; // Upcoming coins with positions
   heroPosition: number; // X position in segment
   segmentLength: number; // Total segment distance
-  heroStance: 'running' | 'jumping' | 'ducking' | 'sprinting' | 'climbing';
+  heroStance: "running" | "jumping" | "ducking" | "sprinting" | "climbing";
 };
 ```
 
@@ -705,22 +704,22 @@ State machines are **the most critical code** in the project. Every machine is t
 
 ```typescript
 // Example: duelMachine.test.ts
-import { createActor } from 'xstate';
-import { duelMachine } from './duelMachine';
+import { createActor } from "xstate";
+import { duelMachine } from "./duelMachine";
 
-describe('DuelMachine', () => {
-  it('should transition from idle to heroActing on ATTACK', () => {
+describe("DuelMachine", () => {
+  it("should transition from idle to heroActing on ATTACK", () => {
     const actor = createActor(duelMachine, {
       input: { hero: mockBarbarianStats, enemies: [mockWolf] },
     });
     actor.start();
 
-    expect(actor.getSnapshot().value).toBe('idle');
-    actor.send({ type: 'ATTACK' });
-    expect(actor.getSnapshot().value).toBe('heroActing');
+    expect(actor.getSnapshot().value).toBe("idle");
+    actor.send({ type: "ATTACK" });
+    expect(actor.getSnapshot().value).toBe("heroActing");
   });
 
-  it('should deal damage based on hero stats', () => {
+  it("should deal damage based on hero stats", () => {
     const actor = createActor(duelMachine, {
       input: {
         hero: { ...mockBarbarianStats, damage: 25 },
@@ -728,16 +727,16 @@ describe('DuelMachine', () => {
       },
     });
     actor.start();
-    actor.send({ type: 'ATTACK' });
+    actor.send({ type: "ATTACK" });
     // After attack animation completes...
     expect(actor.getSnapshot().context.enemies[0].currentHp).toBe(75);
   });
 
-  it('should reject ATTACK input while hero is already attacking', () => {
+  it("should reject ATTACK input while hero is already attacking", () => {
     // Tests commitment-based combat
   });
 
-  it('should end duel when all enemies are defeated', () => {
+  it("should end duel when all enemies are defeated", () => {
     // ...
   });
 });
@@ -749,10 +748,10 @@ XState v5 integrates with React via `@xstate/react`:
 
 ```tsx
 // GameProvider.tsx — creates and provides the root actor
-import { createActor } from 'xstate';
-import { gameMachine } from '@core/machines/gameMachine';
-import { createContext, useContext } from 'react';
-import { useSelector } from '@xstate/react';
+import { createActor } from "xstate";
+import { gameMachine } from "@core/machines/gameMachine";
+import { createContext, useContext } from "react";
+import { useSelector } from "@xstate/react";
 
 const gameActor = createActor(gameMachine);
 gameActor.start();
@@ -760,11 +759,7 @@ gameActor.start();
 const GameActorContext = createContext(gameActor);
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <GameActorContext.Provider value={gameActor}>
-      {children}
-    </GameActorContext.Provider>
-  );
+  return <GameActorContext.Provider value={gameActor}>{children}</GameActorContext.Provider>;
 }
 
 export function useGameActor() {
@@ -822,18 +817,11 @@ export function calculateBlockResult(
   /* ... */
 }
 
-export function isInRange(
-  attackerX: number,
-  defenderX: number,
-  attackRange: number,
-): boolean {
+export function isInRange(attackerX: number, defenderX: number, attackRange: number): boolean {
   /* ... */
 }
 
-export function calculateKnockback(
-  damage: number,
-  attackType: AttackType,
-): number {
+export function calculateKnockback(damage: number, attackType: AttackType): number {
   /* ... */
 }
 ```
@@ -842,10 +830,7 @@ export function calculateKnockback(
 
 ```typescript
 // ── Reward Calculation ──
-export function calculateRunReward(
-  result: RunResult,
-  chapter: ChapterId,
-): RewardBreakdown {
+export function calculateRunReward(result: RunResult, chapter: ChapterId): RewardBreakdown {
   const multiplier = CHAPTER_MULTIPLIERS[chapter]; // 1, 2.5, 5
 
   return {
@@ -853,8 +838,7 @@ export function calculateRunReward(
     duelDamageReward: result.duelDamageDealt * 1 * multiplier,
     enemyKillReward: result.enemiesDefeated * 50 * multiplier,
     bossReward: result.bossDefeated ? 200 * multiplier : 0,
-    coinReward:
-      result.coinsCollected.reduce((sum, c) => sum + c.value, 0) * multiplier,
+    coinReward: result.coinsCollected.reduce((sum, c) => sum + c.value, 0) * multiplier,
     total: 0, // Computed
   };
 }
@@ -895,10 +879,7 @@ export type DerivedHeroStats = {
   specialAbility: SpecialAbilityStats;
 };
 
-export function deriveHeroStats(
-  baseStats: HeroBaseStats,
-  upgrades: UpgradeGrid,
-): DerivedHeroStats {
+export function deriveHeroStats(baseStats: HeroBaseStats, upgrades: UpgradeGrid): DerivedHeroStats {
   // Pure function: base + sum of upgrade deltas
 }
 ```
@@ -908,10 +889,7 @@ export function deriveHeroStats(
 Generates the enemy encounter sequence for a run. Uses **seeded PRNG** for reproducibility in tests and debug.
 
 ```typescript
-export function generateLevel(
-  chapter: ChapterDefinition,
-  seed: number,
-): EnemyEncounter[] {
+export function generateLevel(chapter: ChapterDefinition, seed: number): EnemyEncounter[] {
   const rng = createSeededRng(seed);
   // Place enemies along the chapter path
   // Ensure minimum spacing between encounters
@@ -947,12 +925,12 @@ export function applyPostDuelHeal(
 ```typescript
 export const MAX_RUN_DURATION_MS = 90_000;
 
-export type TimerPhase = 'safe' | 'warning' | 'critical';
+export type TimerPhase = "safe" | "warning" | "critical";
 
 export function getTimerPhase(remainingMs: number): TimerPhase {
-  if (remainingMs > 30_000) return 'safe';
-  if (remainingMs > 15_000) return 'warning';
-  return 'critical';
+  if (remainingMs > 30_000) return "safe";
+  if (remainingMs > 15_000) return "warning";
+  return "critical";
 }
 
 export function tickTimer(remainingMs: number, deltaMs: number): number {
@@ -1010,15 +988,15 @@ export interface IEnemyBehavior {
 export const wolfBehavior: IEnemyBehavior = {
   decideAction(state, rng) {
     const distToHero = state.heroX - state.enemyX;
-    if (distToHero > WOLF_POUNCE_RANGE) return { type: 'wait' };
-    if (distToHero <= WOLF_POUNCE_RANGE) return { type: 'pounce' };
-    return { type: 'retreat' };
+    if (distToHero > WOLF_POUNCE_RANGE) return { type: "wait" };
+    if (distToHero <= WOLF_POUNCE_RANGE) return { type: "pounce" };
+    return { type: "retreat" };
   },
   getWindUpDuration(action) {
-    return action.type === 'pounce' ? 400 : 200;
+    return action.type === "pounce" ? 400 : 200;
   },
   getRecoveryDuration(action) {
-    return action.type === 'pounce' ? 600 : 300;
+    return action.type === "pounce" ? 600 : 300;
   },
 };
 ```
@@ -1033,7 +1011,7 @@ PixiJS 8 uses an async `Application.init()` API. The canvas is created by PixiJS
 
 ```typescript
 // GameRenderer.ts
-import { Application, Container } from 'pixi.js';
+import { Application, Container } from "pixi.js";
 
 export class GameRenderer {
   private app: Application;
@@ -1092,7 +1070,7 @@ function GameScreen() {
         if (!runSnapshot) return;
 
         // 2. Send TICK event to RunMachine (advances timer, physics)
-        gameActor.send({ type: 'TICK', deltaMs });
+        gameActor.send({ type: "TICK", deltaMs });
 
         // 3. Renderer reads updated state and draws
         renderer.render(runSnapshot.context);
@@ -1131,10 +1109,7 @@ export class TraversalScene {
     this.container = new Container();
     this.parallax = new ParallaxBackground(heroId);
     this.heroDisplay = new HeroDisplay(heroId);
-    this.container.addChild(
-      this.parallax.container,
-      this.heroDisplay.container,
-    );
+    this.container.addChild(this.parallax.container, this.heroDisplay.container);
   }
 
   update(state: TraversalContext, deltaMs: number): void {
@@ -1226,7 +1201,7 @@ export interface AnimationOptions {
 
 ```typescript
 // animation/SpritesheetAnimator.ts
-import { AnimatedSprite, Container, Spritesheet } from 'pixi.js';
+import { AnimatedSprite, Container, Spritesheet } from "pixi.js";
 
 export class SpritesheetAnimator implements IAnimationController {
   private container: Container;
@@ -1258,7 +1233,7 @@ export class SpritesheetAnimator implements IAnimationController {
 
 ```typescript
 // animation/SpineAnimator.ts — Optional, requires Spine license
-import { Spine } from '@esotericsoftware/spine-pixi-v8';
+import { Spine } from "@esotericsoftware/spine-pixi-v8";
 
 export class SpineAnimator implements IAnimationController {
   private spine: Spine;
@@ -1289,19 +1264,13 @@ export type AnimationFactory = () => Promise<IAnimationController>;
 
 const registry: Map<string, AnimationFactory> = new Map();
 
-export function registerAnimation(
-  entityId: string,
-  factory: AnimationFactory,
-): void {
+export function registerAnimation(entityId: string, factory: AnimationFactory): void {
   registry.set(entityId, factory);
 }
 
-export function createAnimationController(
-  entityId: string,
-): Promise<IAnimationController> {
+export function createAnimationController(entityId: string): Promise<IAnimationController> {
   const factory = registry.get(entityId);
-  if (!factory)
-    throw new Error(`No animation registered for entity: ${entityId}`);
+  if (!factory) throw new Error(`No animation registered for entity: ${entityId}`);
   return factory();
 }
 ```
@@ -1374,7 +1343,7 @@ export class MusicPlayer {
     if (this.currentTrack) {
       const current = this.tracks.get(this.currentTrack)!;
       current.fade(current.volume(), 0, 1000);
-      current.once('fade', () => current.stop());
+      current.once("fade", () => current.stop());
     }
 
     const next = this.getOrLoadTrack(trackId);
@@ -1412,7 +1381,7 @@ export class SfxPlayer {
   constructor() {
     // All SFX packed into one audio sprite file
     this.spriteBank = new Howl({
-      src: ['sfx-sprite.webm', 'sfx-sprite.mp3'],
+      src: ["sfx-sprite.webm", "sfx-sprite.mp3"],
       sprite: AUDIO_MANIFEST.sfxSprites,
       // e.g., { hit: [0, 300], block: [400, 250], perfectBlock: [700, 400], ... }
     });
@@ -1438,8 +1407,8 @@ export class SfxPlayer {
 // audioManifest.ts
 export const AUDIO_MANIFEST = {
   music: {
-    'barbarian-theme': { src: ['/audio/music/barbarian-theme.mp3'] },
-    'archer-theme': { src: ['/audio/music/archer-theme.mp3'] },
+    "barbarian-theme": { src: ["/audio/music/barbarian-theme.mp3"] },
+    "archer-theme": { src: ["/audio/music/archer-theme.mp3"] },
     // ...
   },
   sfxSprites: {
@@ -1472,13 +1441,13 @@ export class InputManager {
   private mousePosition: { x: number; y: number } = { x: 0, y: 0 };
 
   constructor(private inputMap: InputMap) {
-    window.addEventListener('keydown', this.onKeyDown);
-    window.addEventListener('keyup', this.onKeyUp);
-    window.addEventListener('mousedown', this.onMouseDown);
-    window.addEventListener('mouseup', this.onMouseUp);
-    window.addEventListener('mousemove', this.onMouseMove);
+    window.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("keyup", this.onKeyUp);
+    window.addEventListener("mousedown", this.onMouseDown);
+    window.addEventListener("mouseup", this.onMouseUp);
+    window.addEventListener("mousemove", this.onMouseMove);
     // Prevent context menu on right-click in game area
-    window.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
   /** Call once per frame at the START of the update loop */
@@ -1513,30 +1482,30 @@ export class InputManager {
 ```typescript
 // types.ts
 export enum GameAction {
-  MoveLeft = 'moveLeft',
-  MoveRight = 'moveRight',
-  Jump = 'jump',
-  Duck = 'duck',
-  Sprint = 'sprint',
-  SlowDown = 'slowDown',
-  Attack = 'attack',
-  Defend = 'defend',
-  Special = 'special',
+  MoveLeft = "moveLeft",
+  MoveRight = "moveRight",
+  Jump = "jump",
+  Duck = "duck",
+  Sprint = "sprint",
+  SlowDown = "slowDown",
+  Attack = "attack",
+  Defend = "defend",
+  Special = "special",
 }
 
 // InputMap.ts
 export type InputMap = Record<GameAction, (string | number)[]>;
 
 export const DEFAULT_INPUT_MAP: InputMap = {
-  [GameAction.MoveLeft]: ['a', 'ArrowLeft'],
-  [GameAction.MoveRight]: ['d', 'ArrowRight'],
-  [GameAction.Jump]: ['w', 'ArrowUp', ' '], // W, Up, Space
-  [GameAction.Duck]: ['s', 'ArrowDown'],
-  [GameAction.Sprint]: ['d'], // D during traversal
-  [GameAction.SlowDown]: ['a'], // A during traversal
+  [GameAction.MoveLeft]: ["a", "ArrowLeft"],
+  [GameAction.MoveRight]: ["d", "ArrowRight"],
+  [GameAction.Jump]: ["w", "ArrowUp", " "], // W, Up, Space
+  [GameAction.Duck]: ["s", "ArrowDown"],
+  [GameAction.Sprint]: ["d"], // D during traversal
+  [GameAction.SlowDown]: ["a"], // A during traversal
   [GameAction.Attack]: [0], // LMB (mouse button 0)
   [GameAction.Defend]: [2], // RMB (mouse button 2)
-  [GameAction.Special]: [' '], // Spacebar
+  [GameAction.Special]: [" "], // Spacebar
 };
 ```
 
@@ -1570,26 +1539,26 @@ React components are mounted/unmounted based on the `GameMachine`'s current stat
 function App() {
   const gameActor = useGameActor();
   const screen = useSelector(gameActor, (state) => {
-    if (state.matches('titleScreen')) return 'title';
-    if (state.matches('heroSelect')) return 'heroSelect';
-    if (state.matches('cinematic')) return 'cinematic';
-    if (state.matches('run')) return 'game';
-    if (state.matches('results')) return 'results';
-    if (state.matches('upgrade')) return 'upgrade';
-    if (state.matches('prestige')) return 'prestige';
-    return 'title';
+    if (state.matches("titleScreen")) return "title";
+    if (state.matches("heroSelect")) return "heroSelect";
+    if (state.matches("cinematic")) return "cinematic";
+    if (state.matches("run")) return "game";
+    if (state.matches("results")) return "results";
+    if (state.matches("upgrade")) return "upgrade";
+    if (state.matches("prestige")) return "prestige";
+    return "title";
   });
 
   return (
     <GameProvider>
       <div className={styles.app}>
-        {screen === 'title' && <TitleScreen />}
-        {screen === 'heroSelect' && <HeroSelect />}
-        {screen === 'cinematic' && <CinematicPlayer />}
-        {screen === 'game' && <GameScreen />}
-        {screen === 'results' && <ResultsScreen />}
-        {screen === 'upgrade' && <UpgradeScreen />}
-        {screen === 'prestige' && <PrestigeScreen />}
+        {screen === "title" && <TitleScreen />}
+        {screen === "heroSelect" && <HeroSelect />}
+        {screen === "cinematic" && <CinematicPlayer />}
+        {screen === "game" && <GameScreen />}
+        {screen === "results" && <ResultsScreen />}
+        {screen === "upgrade" && <UpgradeScreen />}
+        {screen === "prestige" && <PrestigeScreen />}
       </div>
     </GameProvider>
   );
@@ -1703,7 +1672,7 @@ function UpgradeGrid({ heroId }: { heroId: HeroId }) {
                 disabled={!canBuy}
                 onClick={() =>
                   gameActor.send({
-                    type: 'PURCHASE_UPGRADE',
+                    type: "PURCHASE_UPGRADE",
                     heroId,
                     category: category.id,
                     level: level + 1,
@@ -1775,7 +1744,7 @@ export function createDefaultSaveData(): SaveData {
 
 ```typescript
 // SaveManager.ts
-const STORAGE_KEY = 'horde-breaker-save';
+const STORAGE_KEY = "horde-breaker-save";
 
 export class SaveManager {
   load(): SaveData {
@@ -1796,10 +1765,10 @@ export class SaveManager {
 
   exportToFile(data: SaveData): void {
     const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `horde-breaker-save-${Date.now()}.json`;
     a.click();
@@ -1889,18 +1858,18 @@ Assets are loaded **per hero** to avoid loading all 12 heroes worth of art at st
 const assetBundles: Record<HeroId, AssetBundle> = {
   [HeroId.Barbarian]: {
     spritesheets: [
-      'sprites/heroes/barbarian/idle.json',
-      'sprites/heroes/barbarian/attack.json',
-      'sprites/enemies/barbarian-chapter/wolf.json',
+      "sprites/heroes/barbarian/idle.json",
+      "sprites/heroes/barbarian/attack.json",
+      "sprites/enemies/barbarian-chapter/wolf.json",
       // ...
     ],
     backgrounds: [
-      'backgrounds/barbarian/layer-sky.png',
-      'backgrounds/barbarian/layer-mountains.png',
-      'backgrounds/barbarian/layer-trees.png',
-      'backgrounds/barbarian/layer-ground.png',
+      "backgrounds/barbarian/layer-sky.png",
+      "backgrounds/barbarian/layer-mountains.png",
+      "backgrounds/barbarian/layer-trees.png",
+      "backgrounds/barbarian/layer-ground.png",
     ],
-    music: 'barbarian-theme',
+    music: "barbarian-theme",
   },
 };
 
@@ -1954,16 +1923,16 @@ http://localhost:5173/?debug=true&logLevel=debug&logModules=combat,economy&hero=
 // debug/DebugConfig.ts
 export interface DebugConfig {
   enabled: boolean;
-  logLevel: 'none' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+  logLevel: "none" | "error" | "warn" | "info" | "debug" | "trace";
   logModules: string[]; // Empty = all modules; ['combat'] = only combat logs
 
   // ── Quick Start ──
   hero: HeroId | null; // Skip to specific hero
   chapter: ChapterId | null; // Skip to specific chapter
-  skipTo: 'traversal' | 'duel' | 'boss' | null; // Skip directly to phase
+  skipTo: "traversal" | "duel" | "boss" | null; // Skip directly to phase
 
   // ── Cheats ──
-  upgrades: 'none' | 'half' | 'max' | null; // Pre-set upgrade levels
+  upgrades: "none" | "half" | "max" | null; // Pre-set upgrade levels
   invincible: boolean; // Hero can't die
   infiniteTime: boolean; // Timer doesn't count down
   currency: number | null; // Override starting currency
@@ -1983,22 +1952,20 @@ export function parseDebugConfig(): DebugConfig {
   const params = new URLSearchParams(window.location.search);
 
   return {
-    enabled: params.get('debug') === 'true',
-    logLevel: (params.get('logLevel') as DebugConfig['logLevel']) ?? 'info',
-    logModules: params.get('logModules')?.split(',') ?? [],
-    hero: (params.get('hero') as HeroId) ?? null,
-    chapter: params.has('chapter')
-      ? (Number(params.get('chapter')) as ChapterId)
-      : null,
-    skipTo: (params.get('skipTo') as DebugConfig['skipTo']) ?? null,
-    upgrades: (params.get('upgrades') as DebugConfig['upgrades']) ?? null,
-    invincible: params.get('invincible') === 'true',
-    infiniteTime: params.get('infiniteTime') === 'true',
-    currency: params.has('currency') ? Number(params.get('currency')) : null,
-    seed: params.has('seed') ? Number(params.get('seed')) : null,
-    showHitboxes: params.get('showHitboxes') === 'true',
-    showFps: params.get('showFps') === 'true',
-    showStateOverlay: params.get('showStateOverlay') === 'true',
+    enabled: params.get("debug") === "true",
+    logLevel: (params.get("logLevel") as DebugConfig["logLevel"]) ?? "info",
+    logModules: params.get("logModules")?.split(",") ?? [],
+    hero: (params.get("hero") as HeroId) ?? null,
+    chapter: params.has("chapter") ? (Number(params.get("chapter")) as ChapterId) : null,
+    skipTo: (params.get("skipTo") as DebugConfig["skipTo"]) ?? null,
+    upgrades: (params.get("upgrades") as DebugConfig["upgrades"]) ?? null,
+    invincible: params.get("invincible") === "true",
+    infiniteTime: params.get("infiniteTime") === "true",
+    currency: params.has("currency") ? Number(params.get("currency")) : null,
+    seed: params.has("seed") ? Number(params.get("seed")) : null,
+    showHitboxes: params.get("showHitboxes") === "true",
+    showFps: params.get("showFps") === "true",
+    showStateOverlay: params.get("showStateOverlay") === "true",
   };
 }
 ```
@@ -2007,7 +1974,7 @@ export function parseDebugConfig(): DebugConfig {
 
 ```typescript
 // debug/Logger.ts
-export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'none';
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "none";
 
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   trace: 0,
@@ -2033,34 +2000,27 @@ export class ModuleLogger {
   ) {}
 
   private shouldLog(level: LogLevel): boolean {
-    if (!this.config.enabled) return level === 'error'; // Always log errors
-    if (LOG_LEVEL_PRIORITY[level] < LOG_LEVEL_PRIORITY[this.config.logLevel])
-      return false;
-    if (
-      this.config.logModules.length > 0 &&
-      !this.config.logModules.includes(this.module)
-    )
+    if (!this.config.enabled) return level === "error"; // Always log errors
+    if (LOG_LEVEL_PRIORITY[level] < LOG_LEVEL_PRIORITY[this.config.logLevel]) return false;
+    if (this.config.logModules.length > 0 && !this.config.logModules.includes(this.module))
       return false;
     return true;
   }
 
   trace(msg: string, ...args: unknown[]): void {
-    if (this.shouldLog('trace'))
-      console.debug(`[${this.module}]`, msg, ...args);
+    if (this.shouldLog("trace")) console.debug(`[${this.module}]`, msg, ...args);
   }
   debug(msg: string, ...args: unknown[]): void {
-    if (this.shouldLog('debug'))
-      console.debug(`[${this.module}]`, msg, ...args);
+    if (this.shouldLog("debug")) console.debug(`[${this.module}]`, msg, ...args);
   }
   info(msg: string, ...args: unknown[]): void {
-    if (this.shouldLog('info')) console.info(`[${this.module}]`, msg, ...args);
+    if (this.shouldLog("info")) console.info(`[${this.module}]`, msg, ...args);
   }
   warn(msg: string, ...args: unknown[]): void {
-    if (this.shouldLog('warn')) console.warn(`[${this.module}]`, msg, ...args);
+    if (this.shouldLog("warn")) console.warn(`[${this.module}]`, msg, ...args);
   }
   error(msg: string, ...args: unknown[]): void {
-    if (this.shouldLog('error'))
-      console.error(`[${this.module}]`, msg, ...args);
+    if (this.shouldLog("error")) console.error(`[${this.module}]`, msg, ...args);
   }
 }
 
@@ -2075,7 +2035,7 @@ XState v5 supports a built-in inspector for visualizing state machines in real t
 
 ```typescript
 // debug/StateInspector.ts
-import { createBrowserInspector } from '@statelyai/inspect';
+import { createBrowserInspector } from "@statelyai/inspect";
 
 export function setupInspector(config: DebugConfig): void {
   if (!config.enabled || import.meta.env.PROD) return;
@@ -2106,24 +2066,24 @@ export function applyDebugOverrides(
 
   // Auto-select hero and chapter
   if (config.hero) {
-    gameActor.send({ type: 'START_GAME' });
+    gameActor.send({ type: "START_GAME" });
     gameActor.send({
-      type: 'SELECT_HERO',
+      type: "SELECT_HERO",
       heroId: config.hero,
       chapter: config.chapter ?? 1,
     });
   }
 
   // Override upgrades
-  if (config.upgrades === 'max') {
-    gameActor.send({ type: 'DEBUG_SET_UPGRADES', level: 6 });
-  } else if (config.upgrades === 'half') {
-    gameActor.send({ type: 'DEBUG_SET_UPGRADES', level: 3 });
+  if (config.upgrades === "max") {
+    gameActor.send({ type: "DEBUG_SET_UPGRADES", level: 6 });
+  } else if (config.upgrades === "half") {
+    gameActor.send({ type: "DEBUG_SET_UPGRADES", level: 3 });
   }
 
   // Override currency
   if (config.currency !== null) {
-    gameActor.send({ type: 'DEBUG_SET_CURRENCY', amount: config.currency });
+    gameActor.send({ type: "DEBUG_SET_CURRENCY", amount: config.currency });
   }
 }
 ```
@@ -2173,11 +2133,11 @@ export function applyDebugOverrides(
 
 ```typescript
 // core/systems/economy.test.ts
-import { describe, it, expect } from 'vitest';
-import { calculateRunReward } from './economy';
+import { describe, it, expect } from "vitest";
+import { calculateRunReward } from "./economy";
 
-describe('calculateRunReward', () => {
-  it('awards $1 per percent distance in chapter 1', () => {
+describe("calculateRunReward", () => {
+  it("awards $1 per percent distance in chapter 1", () => {
     const result = calculateRunReward(
       {
         distancePercent: 50,
@@ -2192,7 +2152,7 @@ describe('calculateRunReward', () => {
     expect(result.distanceReward).toBe(50);
   });
 
-  it('applies chapter 2 multiplier (2.5x)', () => {
+  it("applies chapter 2 multiplier (2.5x)", () => {
     const result = calculateRunReward(
       {
         distancePercent: 50,
@@ -2207,7 +2167,7 @@ describe('calculateRunReward', () => {
     expect(result.distanceReward).toBe(125);
   });
 
-  it('awards $50 per enemy killed', () => {
+  it("awards $50 per enemy killed", () => {
     const result = calculateRunReward(
       {
         distancePercent: 0,
@@ -2228,42 +2188,42 @@ describe('calculateRunReward', () => {
 
 ```typescript
 // core/machines/duelMachine.test.ts
-import { describe, it, expect } from 'vitest';
-import { createActor } from 'xstate';
-import { duelMachine } from './duelMachine';
+import { describe, it, expect } from "vitest";
+import { createActor } from "xstate";
+import { duelMachine } from "./duelMachine";
 
-describe('DuelMachine', () => {
+describe("DuelMachine", () => {
   const createDuel = (overrides = {}) =>
     createActor(duelMachine, {
       input: {
         hero: { maxHp: 100, damage: 10, attackSpeed: 1, armor: 0 },
-        enemies: [{ id: 'wolf', hp: 50, damage: 15, behavior: 'wolf' }],
+        enemies: [{ id: "wolf", hp: 50, damage: 15, behavior: "wolf" }],
         ...overrides,
       },
     });
 
-  it('transitions to heroActing on ATTACK when idle', () => {
+  it("transitions to heroActing on ATTACK when idle", () => {
     const actor = createDuel();
     actor.start();
-    actor.send({ type: 'ATTACK' });
-    expect(actor.getSnapshot().matches('heroActing')).toBe(true);
+    actor.send({ type: "ATTACK" });
+    expect(actor.getSnapshot().matches("heroActing")).toBe(true);
   });
 
-  it('ignores ATTACK when already attacking (commitment)', () => {
+  it("ignores ATTACK when already attacking (commitment)", () => {
     const actor = createDuel();
     actor.start();
-    actor.send({ type: 'ATTACK' });
-    actor.send({ type: 'ATTACK' }); // Should be ignored
+    actor.send({ type: "ATTACK" });
+    actor.send({ type: "ATTACK" }); // Should be ignored
     // Hero should still be in the first attack, not queued
     expect(actor.getSnapshot().context.attackCount).toBe(1);
   });
 
-  it('reduces enemy HP when attack connects', () => {
+  it("reduces enemy HP when attack connects", () => {
     const actor = createDuel();
     actor.start();
-    actor.send({ type: 'ATTACK' });
+    actor.send({ type: "ATTACK" });
     // Simulate animation completion
-    actor.send({ type: 'ANIMATION_COMPLETE' });
+    actor.send({ type: "ANIMATION_COMPLETE" });
     expect(actor.getSnapshot().context.enemies[0].currentHp).toBe(40);
   });
 });
@@ -2313,28 +2273,28 @@ describe('UpgradeScreen', () => {
 
 ```typescript
 // e2e/run-loop.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('complete first run and purchase upgrade', async ({ page }) => {
-  await page.goto('/');
+test("complete first run and purchase upgrade", async ({ page }) => {
+  await page.goto("/");
 
   // Title screen
-  await expect(page.getByText('Horde Breaker')).toBeVisible();
-  await page.getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByText("Horde Breaker")).toBeVisible();
+  await page.getByRole("button", { name: "Play" }).click();
 
   // Hero select — only Barbarian available
-  await expect(page.getByText('Barbarian')).toBeVisible();
-  await page.getByText('Barbarian').click();
+  await expect(page.getByText("Barbarian")).toBeVisible();
+  await page.getByText("Barbarian").click();
 
   // Game screen — wait for run to end (or use debug params)
   // ... (use debug URL to fast-forward)
 
   // Results screen
-  await expect(page.getByText('Defeat')).toBeVisible();
-  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByText("Defeat")).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
 
   // Upgrade screen
-  await expect(page.getByText('Max Health')).toBeVisible();
+  await expect(page.getByText("Max Health")).toBeVisible();
 });
 ```
 
@@ -2374,21 +2334,21 @@ export function mockEnemyInstance(overrides = {}): EnemyInstance {
 
 ```typescript
 // vitest.config.ts
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test-setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    environment: "jsdom",
+    setupFiles: ["./src/test-setup.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'html', 'lcov'],
-      include: ['src/core/**', 'src/ui/**', 'src/services/**'],
-      exclude: ['src/**/*.test.*', 'src/**/index.ts'],
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      include: ["src/core/**", "src/ui/**", "src/services/**"],
+      exclude: ["src/**/*.test.*", "src/**/index.ts"],
       thresholds: {
         lines: 80,
         branches: 75,
@@ -2399,15 +2359,15 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@core': '/src/core',
-      '@data': '/src/data',
-      '@rendering': '/src/rendering',
-      '@audio': '/src/audio',
-      '@input': '/src/input',
-      '@services': '/src/services',
-      '@ui': '/src/ui',
-      '@debug': '/src/debug',
-      '@utils': '/src/utils',
+      "@core": "/src/core",
+      "@data": "/src/data",
+      "@rendering": "/src/rendering",
+      "@audio": "/src/audio",
+      "@input": "/src/input",
+      "@services": "/src/services",
+      "@ui": "/src/ui",
+      "@debug": "/src/debug",
+      "@utils": "/src/utils",
     },
   },
 });
@@ -2480,7 +2440,7 @@ export default defineConfig({
 
 ```
 Phase 1: Foundation (Week 1–2)
-  ├── Project scaffolding (Vite, TS, ESLint, Vitest, Playwright)
+  ├── Project scaffolding (Vite, TS, oxlint + oxfmt, Vitest, Playwright)
   ├── Core types & data structures
   ├── Debug config & Logger
   ├── SaveManager + schema
@@ -2596,8 +2556,7 @@ interface DebugConfig { enabled, logLevel, logModules, hero, chapter, skipTo, up
 ## Appendix B: Recommended VS Code Extensions
 
 - **XState** — `statelyai.stately-vscode` — Visual state machine editor & inspector
-- **ESLint** — `dbaeumer.vscode-eslint`
-- **Prettier** — `esbenp.prettier-vscode`
+- **oxlint** — `oxc.oxc-vscode` — Linting + formatting (replaces ESLint + Prettier)
 - **CSS Modules** — `clinyong.vscode-css-modules`
 - **Vitest** — `vitest.explorer` — Test runner integration
 
@@ -2607,16 +2566,17 @@ interface DebugConfig { enabled, logLevel, logModules, hero, chapter, skipTo, up
 {
   "scripts": {
     "dev": "vite", // Start dev server (HMR)
-    "build": "tsc && vite build", // Type-check + production build
+    "build": "oxlint --type-aware --type-check && vite build", // Type-check + lint + production build
     "preview": "vite preview", // Preview production build
     "test": "vitest", // Run tests in watch mode
     "test:run": "vitest run", // Run tests once (CI)
     "test:coverage": "vitest run --coverage", // Tests with coverage report
     "test:e2e": "playwright test", // Run Playwright E2E tests
-    "lint": "eslint src/", // Lint all source files
-    "lint:fix": "eslint src/ --fix", // Auto-fix lint issues
-    "format": "prettier --write src/", // Format all source files
-    "typecheck": "tsc --noEmit", // Type-check without emitting
+    "lint": "oxlint --type-aware", // Lint all source files
+    "lint:fix": "oxlint --type-aware --fix", // Auto-fix lint issues
+    "format": "oxfmt --write \"src/**/*.{ts,tsx,css}\"", // Format all source files
+    "format:check": "oxfmt --check \"src/**/*.{ts,tsx,css}\"", // Check formatting (CI)
+    "typecheck": "oxlint --type-aware --type-check", // Type-check without emitting
   },
 }
 ```

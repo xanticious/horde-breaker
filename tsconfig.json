@@ -29,17 +29,16 @@
     "noEmit": true,
 
     /* Path Aliases */
-    "baseUrl": ".",
     "paths": {
-      "@core/*": ["src/core/*"],
-      "@data/*": ["src/data/*"],
-      "@rendering/*": ["src/rendering/*"],
-      "@audio/*": ["src/audio/*"],
-      "@input/*": ["src/input/*"],
-      "@services/*": ["src/services/*"],
-      "@ui/*": ["src/ui/*"],
-      "@debug/*": ["src/debug/*"],
-      "@utils/*": ["src/utils/*"]
+      "@core/*": ["./src/core/*"],
+      "@data/*": ["./src/data/*"],
+      "@rendering/*": ["./src/rendering/*"],
+      "@audio/*": ["./src/audio/*"],
+      "@input/*": ["./src/input/*"],
+      "@services/*": ["./src/services/*"],
+      "@ui/*": ["./src/ui/*"],
+      "@debug/*": ["./src/debug/*"],
+      "@utils/*": ["./src/utils/*"]
     }
   },
   "include": ["src/**/*"],

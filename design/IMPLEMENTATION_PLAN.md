@@ -1,6 +1,6 @@
 # Horde Breaker — Implementation Plan
 
-> **Last updated:** 2026-02-15
+> **Last updated:** 2026-02-19
 > **Methodology:** Agile — incremental delivery, always-shippable trunk
 > **Scope:** MVP (Milestone 1) — Barbarian Berzerker only
 > **Companion docs:** `DESIGN_NOTES.md`, `IMPLEMENTATION_DESIGN.md`
@@ -58,15 +58,14 @@
 - [ ] **0.2** — Install dev dependencies:
   - `typescript`, `vite`, `@vitejs/plugin-react`, `vitest`, `jsdom`,
     `@testing-library/react`, `@testing-library/jest-dom`,
-    `eslint`, `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`,
-    `prettier`, `@playwright/test`
+    `oxlint`, `oxlint-tsgolint`, `oxfmt`, `babel-plugin-react-compiler`,
+    `@playwright/test`
 - [ ] **0.3** — Create config files:
   - `tsconfig.json` (strict mode, path aliases, `jsx: "react-jsx"`)
   - `tsconfig.node.json`
-  - `vite.config.ts` (React plugin, path alias resolution)
+  - `vite.config.ts` (React plugin, path alias resolution, `babel-plugin-react-compiler`)
   - `vitest.config.ts` (jsdom environment, path aliases, coverage thresholds)
-  - `eslint.config.js` (flat config, TS rules, `no-explicit-any: error`, `import/no-cycle`)
-  - `.prettierrc`
+  - `.oxlintrc.json` (oxlint config: TypeScript + React Hooks rules, `no-explicit-any: error`)
   - `playwright.config.ts`
 - [ ] **0.4** — Create minimal app shell:
   - `index.html` (mounts `#root`, sets `<title>Horde Breaker</title>`)

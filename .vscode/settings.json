@@ -1,0 +1,28 @@
+{
+  // Use oxlint for linting (replaces ESLint extension)
+  "oxc.enable": true,
+
+  // Formatting: use oxfmt via the oxc extension for TS/TSX/CSS
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+
+  // Per-language overrides to be explicit
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  // Disable the ESLint extension for this workspace (we use oxlint instead)
+  "eslint.enable": false,
+
+  // Disable Prettier extension for this workspace
+  "prettier.enable": false
+}
