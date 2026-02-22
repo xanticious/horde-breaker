@@ -1,0 +1,35 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1.5rem;
+}
+
+.heading {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.placeholder {
+  margin: 0;
+  opacity: 0.6;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.button {
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+}
+
+.buttonSecondary {
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  opacity: 0.75;
+}

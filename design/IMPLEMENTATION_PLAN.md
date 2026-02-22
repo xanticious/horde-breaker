@@ -169,31 +169,32 @@
 
 ### Tasks
 
-- [ ] **2.1** — Create core domain type stubs used by the GameMachine:
+- [x] **2.1** — Create core domain type stubs used by the GameMachine:
   - `src/core/types/hero.ts` — `HeroId` enum (just `Barbarian` for now), `HeroDefinition` interface stub.
   - `src/core/types/chapter.ts` — `ChapterId` enum.
   - `src/core/types/run.ts` — `RunResult` interface stub.
   - `src/core/types/save.ts` — `SaveData` interface stub, `createDefaultSaveData()`.
-- [ ] **2.2** — Create `GameMachine` (`src/core/machines/gameMachine.ts`):
+- [x] **2.2** — Create `GameMachine` (`src/core/machines/gameMachine.ts`):
   - States: `titleScreen`, `heroSelect`, `run`, `results`, `upgrade`.
-  - Events: `START_GAME`, `SELECT_HERO`, `RUN_COMPLETE`, `CONTINUE_TO_UPGRADE`, `START_RUN`, `RETURN_TO_HERO_SELECT`.
-  - No real gameplay logic — `run` state auto-transitions to `results` after a short delay or button press (placeholder).
-- [ ] **2.3** — Create `gameMachine.test.ts`:
+  - Events: `START_GAME`, `SELECT_HERO`, `END_RUN`, `CONTINUE`, `START_RUN`, `GO_TO_HERO_SELECT`.
+  - No real gameplay logic — `run` state transitions to `results` via `END_RUN` button press (placeholder).
+- [x] **2.3** — Create `gameMachine.test.ts`:
   - Test every state transition (title → heroSelect → run → results → upgrade → run).
   - Test that invalid events are ignored.
-- [ ] **2.4** — Create `GameProvider` (`src/ui/providers/GameProvider.tsx`):
-  - Creates the root game actor, provides it via React context.
-- [ ] **2.5** — Create hook `useGameActor.ts` (`src/ui/hooks/useGameActor.ts`).
-- [ ] **2.6** — Create stub screen components (each renders its name + a navigation button):
+- [x] **2.4** — Create `GameProvider` (`src/ui/providers/GameProvider.tsx`):
+  - Creates the root game actor via `createActorContext`, provides it via React context.
+- [x] **2.5** — Create hook `useGameActor.ts` (`src/ui/hooks/useGameActor.ts`). Also created `useGameState.ts`.
+- [x] **2.6** — Create stub screen components (each renders its name + a navigation button):
   - `TitleScreen.tsx` — "Horde Breaker" title + "Play" button → sends `START_GAME`.
   - `HeroSelect.tsx` — "Select Your Hero" + "Barbarian" button → sends `SELECT_HERO`.
-  - `GameScreen.tsx` — "Game Running…" + "End Run" button → sends `RUN_COMPLETE`.
-  - `ResultsScreen.tsx` — "Run Results" + "Continue" button → sends `CONTINUE_TO_UPGRADE`.
+  - `GameScreen.tsx` — "Game Screen" placeholder + "End Run" button → sends `END_RUN`.
+  - `ResultsScreen.tsx` — "Run Results" + "Continue to Upgrades" button → sends `CONTINUE`.
   - `UpgradeScreen.tsx` — "Upgrades" + "Start Run" / "Back to Hero Select" buttons.
-- [ ] **2.7** — Update `App.tsx` to use `GameProvider` and render the active screen based on GameMachine state (state-machine-as-router pattern from the Implementation Design).
-- [ ] **2.8** — Write `App.test.tsx` — verify that clicking through the full screen loop works:
-  - Title → Play → HeroSelect → Select Barbarian → Game → End Run → Results → Continue → Upgrade → Start Run → Game.
-- [ ] **2.9** — All scripts pass.
+  - `PrestigeScreen.tsx` — stub (no machine state yet).
+- [x] **2.7** — Update `App.tsx` to use `GameProvider` and render the active screen based on GameMachine state (state-machine-as-router pattern from the Implementation Design).
+- [x] **2.8** — Write `App.test.tsx` — verify that clicking through the full screen loop works:
+  - Title → Play → HeroSelect → Select Barbarian → Upgrade → Start Run → Game → End Run → Results → Continue → Upgrade → Start Run → Game.
+- [x] **2.9** — All scripts pass. 22 tests passing, build clean with 0 errors/warnings.
 
 ### Acceptance Criteria
 

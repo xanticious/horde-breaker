@@ -1,10 +1,88 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect } from "vitest";
 import App from "./App";
 
-describe("App", () => {
-  it("renders the game title", () => {
+describe("App — screen navigation", () => {
+  it("renders the title screen on load", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: /horde breaker/i })).toBeInTheDocument();
+  });
+
+  it("navigates from Title → Hero Select on Play", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /play/i }));
+
+    expect(screen.getByRole("heading", { name: /select your hero/i })).toBeInTheDocument();
+  });
+
+  it("navigates from Hero Select → Upgrade on hero selection", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /play/i }));
+    await user.click(screen.getByRole("button", { name: /barbarian berzerker/i }));
+
+    expect(screen.getByRole("heading", { name: /upgrades/i })).toBeInTheDocument();
+  });
+
+  it("navigates from Upgrade → Game Screen on Start Run", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /play/i }));
+    await user.click(screen.getByRole("button", { name: /barbarian berzerker/i }));
+    await user.click(screen.getByRole("button", { name: /start run/i }));
+
+    expect(screen.getByText(/game screen — placeholder/i)).toBeInTheDocument();
+  });
+
+  it("navigates from Game → Results → Upgrade on End Run + Continue", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /play/i }));
+    await user.click(screen.getByRole("button", { name: /barbarian berzerker/i }));
+    await user.click(screen.getByRole("button", { name: /start run/i }));
+    await user.click(screen.getByRole("button", { name: /end run/i }));
+
+    expect(screen.getByRole("heading", { name: /run results/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /continue to upgrades/i }));
+
+    expect(screen.getByRole("heading", { name: /upgrades/i })).toBeInTheDocument();
+  });
+
+  it("navigates from Upgrade → Hero Select on Back to Hero Select", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /play/i }));
+    await user.click(screen.getByRole("button", { name: /barbarian berzerker/i }));
+    await user.click(screen.getByRole("button", { name: /back to hero select/i }));
+
+    expect(screen.getByRole("heading", { name: /select your hero/i })).toBeInTheDocument();
+  });
+
+  it("completes a full loop: Title → Select → Upgrade → Run → Results → Upgrade → Run", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    // Title → Hero Select
+    await user.click(screen.getByRole("button", { name: /play/i }));
+    // Hero Select → Upgrade
+    await user.click(screen.getByRole("button", { name: /barbarian berzerker/i }));
+    // Upgrade → Run
+    await user.click(screen.getByRole("button", { name: /start run/i }));
+    // Run → Results
+    await user.click(screen.getByRole("button", { name: /end run/i }));
+    // Results → Upgrade
+    await user.click(screen.getByRole("button", { name: /continue to upgrades/i }));
+    // Second run
+    await user.click(screen.getByRole("button", { name: /start run/i }));
+
+    expect(screen.getByText(/game screen — placeholder/i)).toBeInTheDocument();
   });
 });
