@@ -134,10 +134,10 @@
   src/utils/
   ```
 
-- [ ] **1.2** — Create barrel `index.ts` files for each top-level module:
+- [x] **1.2** — Create barrel `index.ts` files for each top-level module:
   - `src/core/index.ts`, `src/data/index.ts`, `src/rendering/index.ts`, `src/audio/index.ts`, `src/input/index.ts`, `src/services/index.ts`, `src/ui/index.ts`, `src/debug/index.ts`, `src/utils/index.ts`
   - Each starts as an empty file (or a `// barrel export` comment). Exports are added as files are created.
-- [ ] **1.3** — Create asset directory structure:
+- [x] **1.3** — Create asset directory structure:
 
   ```
   assets/sprites/heroes/barbarian/
@@ -151,9 +151,9 @@
   public/fonts/
   ```
 
-- [ ] **1.4** — Create `e2e/` and `docs/` directories.
-- [ ] **1.5** — Verify path aliases resolve: add a trivial util function to `src/utils/math.ts`, import it via `@utils/math` in `App.tsx`, confirm build succeeds. Then remove the usage from App (keep the file for Sprint 9).
-- [ ] **1.6** — `npm run build` and `npm run typecheck` still pass.
+- [x] **1.4** — Create `e2e/` and `docs/` directories.
+- [x] **1.5** — Verify path aliases resolve: add a trivial util function to `src/utils/math.ts`, import it via `@utils/math` in `App.tsx`, confirm build succeeds. Then remove the usage from App (keep the file for Sprint 9).
+- [x] **1.6** — `npm run build` and `npm run typecheck` still pass.
 
 ### Acceptance Criteria
 
