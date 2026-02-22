@@ -1,8 +1,13 @@
 import { assign, setup } from "xstate";
 import type { HeroId } from "@core/types/hero";
 import type { RunResult } from "@core/types/run";
+import { Logger } from "@debug/Logger";
 
-// ─── Event Types ────────────────────────────────────────────────────────────
+// ─── Module Logger ───────────────────────────────────────────────────────────
+
+const log = Logger.create("game");
+
+// ─── Event Types ─────────────────────────────────────────────────────────────
 
 export type GameEvent =
   | { type: "START_GAME" }
@@ -35,11 +40,15 @@ export const gameMachine = setup({
   },
   states: {
     titleScreen: {
+      entry: () => log.debug("Entered titleScreen"),
+      exit: () => log.debug("Exited titleScreen"),
       on: {
         START_GAME: { target: "heroSelect" },
       },
     },
     heroSelect: {
+      entry: () => log.debug("Entered heroSelect"),
+      exit: () => log.debug("Exited heroSelect"),
       on: {
         SELECT_HERO: {
           target: "upgrade",
@@ -50,6 +59,8 @@ export const gameMachine = setup({
       },
     },
     run: {
+      entry: () => log.debug("Entered run"),
+      exit: () => log.debug("Exited run"),
       on: {
         END_RUN: {
           target: "results",
@@ -60,11 +71,15 @@ export const gameMachine = setup({
       },
     },
     results: {
+      entry: () => log.debug("Entered results"),
+      exit: () => log.debug("Exited results"),
       on: {
         CONTINUE: { target: "upgrade" },
       },
     },
     upgrade: {
+      entry: () => log.debug("Entered upgrade"),
+      exit: () => log.debug("Exited upgrade"),
       on: {
         START_RUN: { target: "run" },
         GO_TO_HERO_SELECT: { target: "heroSelect" },

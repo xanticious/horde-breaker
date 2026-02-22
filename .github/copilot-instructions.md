@@ -90,6 +90,8 @@ Use URL query params — no debug UI needed:
 - **No `any`** — use `unknown` + type narrowing.
 - **Composition over inheritance** — Entity behaviors use strategy interfaces (`IEnemyBehavior`, `IAnimationController`), not class hierarchies.
 - **Pure functions for game logic** — `core/systems/` functions have no side effects; no `Date.now()`, no randomness (accept PRNG seed as param).
+- **.gitkeep empty directories** — If a directory is needed for architecture but starts empty, add a `.gitkeep` file with a comment explaining its purpose. When you add the first real file, delete the `.gitkeep`.
+- **Mark sprints complete** — Remember to mark sprints complete in the `IMPLEMENTATION_PLAN.md` file when you finish the associated work.
 
 ## Testing Priorities
 

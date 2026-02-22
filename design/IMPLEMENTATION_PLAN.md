@@ -210,24 +210,24 @@
 
 ### Tasks
 
-- [ ] **3.1** — Create `DebugConfig` (`src/debug/DebugConfig.ts`):
+- [x] **3.1** — Create `DebugConfig` (`src/debug/DebugConfig.ts`):
   - `DebugConfig` interface with: `enabled`, `logLevel`, `logModules`, `hero`, `chapter`, `skipTo`, `upgrades`, `invincible`, `infiniteTime`, `currency`, `seed`, `showHitboxes`, `showFps`, `showStateOverlay`.
   - `parseDebugConfig()` — reads `URLSearchParams`, returns `DebugConfig`.
   - In production builds (`import.meta.env.PROD`), all debug features disabled.
-- [ ] **3.2** — Create `Logger` (`src/debug/Logger.ts`):
+- [x] **3.2** — Create `Logger` (`src/debug/Logger.ts`):
   - `Logger.create(module)` returns a `ModuleLogger` with `trace`, `debug`, `info`, `warn`, `error` methods.
   - Respects `logLevel` and `logModules` filters from `DebugConfig`.
   - Errors always log regardless of config.
-- [ ] **3.3** — Write `Logger.test.ts`:
+- [x] **3.3** — Write `Logger.test.ts`:
   - Test level filtering (debug messages hidden when logLevel=warn).
   - Test module filtering (only specified modules log).
   - Test that errors always pass through.
-- [ ] **3.4** — Create `DebugConfig.test.ts`:
+- [x] **3.4** — Create `DebugConfig.test.ts`:
   - Test URL param parsing for various scenarios.
-- [ ] **3.5** — Add debug logging to `GameMachine` transitions (log state entry/exit at `debug` level).
-- [ ] **3.6** — Create placeholder `Cheats.ts` and `StateInspector.ts` (empty exports, to be filled in later sprints).
-- [ ] **3.7** — Update barrel exports in `src/debug/index.ts`.
-- [ ] **3.8** — All scripts pass.
+- [x] **3.5** — Add debug logging to `GameMachine` transitions (log state entry/exit at `debug` level).
+- [x] **3.6** — Create placeholder `Cheats.ts` and `StateInspector.ts` (empty exports, to be filled in later sprints).
+- [x] **3.7** — Update barrel exports in `src/debug/index.ts`.
+- [x] **3.8** — All scripts pass.
 
 ### Acceptance Criteria
 
