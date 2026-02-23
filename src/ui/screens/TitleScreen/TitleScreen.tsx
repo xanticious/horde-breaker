@@ -1,4 +1,5 @@
 import { useGameActor } from "@ui/hooks/useGameActor";
+import { Button } from "@ui/components/Button/Button";
 import styles from "./TitleScreen.module.css";
 
 export function TitleScreen() {
@@ -8,9 +9,11 @@ export function TitleScreen() {
     <div className={styles.screen}>
       <h1 className={styles.title}>Horde Breaker</h1>
       <p className={styles.subtitle}>Failure Makes You Stronger</p>
-      <button className={styles.playButton} onClick={() => actor.send({ type: "START_GAME" })}>
-        Play
-      </button>
+      <div className={styles.cta}>
+        <Button size="lg" onClick={() => actor.send({ type: "START_GAME" })}>
+          Play
+        </Button>
+      </div>
     </div>
   );
 }

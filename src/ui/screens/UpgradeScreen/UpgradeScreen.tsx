@@ -1,4 +1,5 @@
 import { useGameActor } from "@ui/hooks/useGameActor";
+import { Button } from "@ui/components/Button/Button";
 import styles from "./UpgradeScreen.module.css";
 
 export function UpgradeScreen() {
@@ -9,15 +10,10 @@ export function UpgradeScreen() {
       <h2 className={styles.heading}>Upgrades</h2>
       <p className={styles.placeholder}>Upgrade grid coming soon.</p>
       <div className={styles.actions}>
-        <button className={styles.button} onClick={() => actor.send({ type: "START_RUN" })}>
-          Start Run
-        </button>
-        <button
-          className={styles.buttonSecondary}
-          onClick={() => actor.send({ type: "GO_TO_HERO_SELECT" })}
-        >
+        <Button onClick={() => actor.send({ type: "START_RUN" })}>Start Run</Button>
+        <Button variant="secondary" onClick={() => actor.send({ type: "GO_TO_HERO_SELECT" })}>
           Back to Hero Select
-        </button>
+        </Button>
       </div>
     </div>
   );

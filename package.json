@@ -28,6 +28,8 @@
   },
   "homepage": "https://github.com/xanticious/horde-breaker#readme",
   "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource/cinzel": "^5.2.8",
     "@statelyai/inspect": "^0.4.0",
     "@xstate/react": "^6.0.0",
     "howler": "^2.2.4",

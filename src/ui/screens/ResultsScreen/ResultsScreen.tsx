@@ -1,5 +1,6 @@
 import { useGameActor } from "@ui/hooks/useGameActor";
 import { GameActorContext } from "@ui/providers/GameProvider";
+import { Button } from "@ui/components/Button/Button";
 import styles from "./ResultsScreen.module.css";
 
 export function ResultsScreen() {
@@ -17,9 +18,7 @@ export function ResultsScreen() {
         </ul>
       )}
       <div className={styles.actions}>
-        <button className={styles.button} onClick={() => actor.send({ type: "CONTINUE" })}>
-          Continue to Upgrades
-        </button>
+        <Button onClick={() => actor.send({ type: "CONTINUE" })}>Continue to Upgrades</Button>
       </div>
     </div>
   );

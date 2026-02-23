@@ -1,7 +1,1 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* Superseded by src/styles/global.css — kept as empty entry point for legacy import safety. */

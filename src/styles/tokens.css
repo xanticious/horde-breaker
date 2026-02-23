@@ -1,0 +1,111 @@
+/* Design tokens — CSS custom properties for the Horde Breaker design system.
+   Dark-theme-first. Fire-and-iron color palette. */
+
+:root {
+  /* ─── Color Palette ──────────────────────────────────────────────────────── */
+
+  /* Background layers (darkest → lightest) */
+  --color-bg: #0d1117;
+  --color-surface: #161b22;
+  --color-surface-alt: #21262d;
+  --color-border: #30363d;
+  --color-border-subtle: #21262d;
+
+  /* Text */
+  --color-text: #e6edf3;
+  --color-text-muted: #7d8590;
+  --color-text-subtle: #484f58;
+
+  /* Accent — fire orange, pulled from favicon */
+  --color-accent: #e85d04;
+  --color-accent-hover: #f48c06;
+  --color-accent-active: #dc5502;
+  --color-accent-subtle: #2d1200;
+  --color-accent-text: #ffffff;
+
+  /* Danger / health loss */
+  --color-danger: #da3633;
+  --color-danger-hover: #f85149;
+  --color-danger-subtle: #2d0f0e;
+
+  /* Warning — timer, resources */
+  --color-warning: #e3b341;
+  --color-warning-hover: #d4a017;
+  --color-warning-subtle: #2d1f00;
+
+  /* Success — victory, buffs */
+  --color-success: #3fb950;
+  --color-success-hover: #57c469;
+  --color-success-subtle: #0a2512;
+
+  /* ─── Typography ─────────────────────────────────────────────────────────── */
+
+  /* Font families */
+  --font-display: "Cinzel", "Georgia", serif;
+  --font-body: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-mono: "Fira Code", "Consolas", monospace;
+
+  /* Font size scale (1rem = 16px baseline) */
+  --font-size-xs: 0.75rem; /*  12px */
+  --font-size-sm: 0.875rem; /*  14px */
+  --font-size-base: 1rem; /*  16px */
+  --font-size-md: 1.125rem; /*  18px */
+  --font-size-lg: 1.25rem; /*  20px */
+  --font-size-xl: 1.5rem; /*  24px */
+  --font-size-2xl: 1.875rem; /*  30px */
+  --font-size-3xl: 2.25rem; /*  36px */
+  --font-size-4xl: 3rem; /*  48px */
+  --font-size-5xl: 4rem; /*  64px */
+
+  /* Font weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line heights */
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ─── Spacing Scale ──────────────────────────────────────────────────────── */
+  /* Named by T-shirt size for readability */
+  --space-1: 0.25rem; /*  4px */
+  --space-2: 0.5rem; /*  8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+  --space-24: 6rem; /* 96px */
+
+  /* ─── Border Radius ──────────────────────────────────────────────────────── */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* ─── Shadows ────────────────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-accent: 0 0 12px rgba(232, 93, 4, 0.35);
+
+  /* ─── Transitions ────────────────────────────────────────────────────────── */
+  --transition-fast: 100ms ease;
+  --transition-base: 150ms ease;
+  --transition-slow: 250ms ease;
+
+  /* ─── Z-Index Scale ──────────────────────────────────────────────────────── */
+  --z-base: 0;
+  --z-overlay: 10;
+  --z-hud: 20;
+  --z-modal: 30;
+  --z-tooltip: 40;
+}

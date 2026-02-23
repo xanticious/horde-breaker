@@ -243,10 +243,10 @@
 
 ### Tasks
 
-- [ ] **4.1** — Add a placeholder favicon (`public/favicon.ico` or `.svg`).
-- [ ] **4.2** — Set `<title>Horde Breaker</title>` (already in Sprint 0, verify).
-- [ ] **4.3** — Choose and add a display font (WOFF2) for headings and a body font. Place in `public/fonts/`. Add `@font-face` declarations.
-- [ ] **4.4** — Create `src/styles/` directory with:
+- [x] **4.1** — Add a placeholder favicon (`public/favicon.ico` or `.svg`).
+- [x] **4.2** — Set `<title>Horde Breaker</title>` (already in Sprint 0, verify).
+- [x] **4.3** — Choose and add a display font (WOFF2) for headings and a body font. Place in `public/fonts/`. Add `@font-face` declarations.
+- [x] **4.4** — Create `src/styles/` directory with:
   - `reset.css` — minimal CSS reset (box-sizing, margin/padding reset, font smoothing).
   - `tokens.css` — CSS custom properties for the design system:
     - Color palette: `--color-bg`, `--color-surface`, `--color-text`, `--color-accent`, `--color-danger`, `--color-warning`, `--color-success`, etc.
@@ -254,18 +254,18 @@
     - Spacing: `--space-xs` through `--space-2xl`.
     - Border radius, shadows, transitions.
   - `global.css` — applies reset + tokens to `body/#root`, sets default font.
-- [ ] **4.5** — Import `global.css` in `main.tsx`.
-- [ ] **4.6** — Create `App.module.css` — full-viewport layout (dark background, centered content).
-- [ ] **4.7** — Style all stub screens minimally — centered text, readable font, dark theme, accent-colored buttons. Each screen gets a `.module.css` file.
-- [ ] **4.8** — Create `src/ui/components/Button/Button.tsx` + `Button.module.css`:
+- [x] **4.5** — Import `global.css` in `main.tsx`.
+- [x] **4.6** — Create `App.module.css` — full-viewport layout (dark background, centered content).
+- [x] **4.7** — Style all stub screens minimally — centered text, readable font, dark theme, accent-colored buttons. Each screen gets a `.module.css` file.
+- [x] **4.8** — Create `src/ui/components/Button/Button.tsx` + `Button.module.css`:
   - Reusable button component with variants (`primary`, `secondary`, `danger`).
   - Replace ad-hoc `<button>` elements across stub screens with `<Button>`.
-- [ ] **4.9** — Create `docs/STYLE_GUIDE.md`:
+- [x] **4.9** — Create `docs/STYLE_GUIDE.md`:
   - Document the color palette, typography scale, spacing scale.
   - Document component naming conventions (CSS Modules, camelCase classes).
   - Document dark-theme-first approach.
   - Include screenshots or descriptions of each screen's intended layout.
-- [ ] **4.10** — All scripts pass. App looks clean and intentional (dark theme, proper fonts, no ugly defaults).
+- [x] **4.10** — All scripts pass. App looks clean and intentional (dark theme, proper fonts, no ugly defaults).
 
 ### Acceptance Criteria
 
