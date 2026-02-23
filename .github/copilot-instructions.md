@@ -88,6 +88,7 @@ Use URL query params — no debug UI needed:
 - **DRY** — Don't repeat yourself. Extract shared logic into `core/systems/` pure functions or `utils/`. Data duplication belongs in `src/data/` files, not scattered across code.
 - **Comments explain _why_, not _what_** — Use comments sparingly. The code should be self-documenting through clear naming. Reserve comments for non-obvious design decisions, workarounds, or "why this approach" rationale.
 - **No `any`** — use `unknown` + type narrowing.
+- **Lint suppression** — use `oxlint-disable-next-line <rule>` (or `oxlint-disable-line`) to suppress individual oxlint warnings. For TypeScript-specific rules use the `typescript/` prefix (e.g., `typescript/no-extraneous-class`), not `@typescript-eslint/`. Never use `eslint-disable` comments. Always include a `-- reason` explanation after the rule name.
 - **Composition over inheritance** — Entity behaviors use strategy interfaces (`IEnemyBehavior`, `IAnimationController`), not class hierarchies.
 - **Pure functions for game logic** — `core/systems/` functions have no side effects; no `Date.now()`, no randomness (accept PRNG seed as param).
 - **.gitkeep empty directories** — If a directory is needed for architecture but starts empty, add a `.gitkeep` file with a comment explaining its purpose. When you add the first real file, delete the `.gitkeep`.

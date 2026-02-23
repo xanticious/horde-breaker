@@ -11,5 +11,5 @@
  * All exports are no-ops in production (`import.meta.env.PROD`).
  */
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class -- stub, methods added in later sprint
+// oxlint-disable-next-line typescript/no-extraneous-class -- stub, methods added in later sprint
 export class Cheats {}

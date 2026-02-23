@@ -106,18 +106,19 @@ export class Logger {
 
     switch (level) {
       case "trace":
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.trace(prefix, message, ...args);
         break;
       case "debug":
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.debug(prefix, message, ...args);
         break;
       case "info":
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.info(prefix, message, ...args);
         break;
       case "warn":
+        // oxlint-disable-next-line no-console
         console.warn(prefix, message, ...args);
         break;
     }

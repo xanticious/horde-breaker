@@ -9,5 +9,5 @@
  * Only active when `?debug=true&showStateOverlay=true`.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class -- stub, methods added in later sprint
+// oxlint-disable-next-line typescript/no-extraneous-class -- stub, methods added in later sprint
 export class StateInspector {}
