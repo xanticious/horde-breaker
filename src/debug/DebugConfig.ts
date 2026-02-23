@@ -82,7 +82,7 @@ export function parseDebugConfig(
     return { ...DISABLED_CONFIG };
   }
 
-  const params = new URLSearchParams(search ?? "");
+  const params = new URLSearchParams(search ?? window.location.search);
 
   if (params.get("debug") !== "true") {
     return { ...DISABLED_CONFIG };

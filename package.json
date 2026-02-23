@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/xanticious/horde-breaker#readme",
   "dependencies": {
+    "@statelyai/inspect": "^0.4.0",
     "@xstate/react": "^6.0.0",
     "howler": "^2.2.4",
     "pixi.js": "^8.16.0",

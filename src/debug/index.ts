@@ -5,4 +5,5 @@ export type { ModuleLogger } from "./Logger";
 export { Logger, configureLogger, resetLoggerConfig } from "./Logger";
 
 export { Cheats } from "./Cheats";
-export { StateInspector } from "./StateInspector";
+export type { BrowserInspector } from "./StateInspector";
+export { setupInspector, getInspector } from "./StateInspector";
