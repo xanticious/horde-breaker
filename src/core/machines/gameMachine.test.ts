@@ -8,8 +8,12 @@ const MOCK_RUN_RESULT: RunResult = {
   heroId: HeroId.Barbarian,
   chapter: 1,
   currencyEarned: 75,
+  distancePercent: 80,
   distanceReached: 80,
   enemiesDefeated: 3,
+  duelDamageDealt: 120,
+  bossDefeated: false,
+  coinsCollected: [],
   completed: false,
 };
 

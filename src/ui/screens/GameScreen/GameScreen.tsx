@@ -15,8 +15,12 @@ export function GameScreen() {
         heroId: selectedHeroId ?? HeroId.Barbarian,
         chapter: 1,
         currencyEarned: 0,
+        distancePercent: 0,
         distanceReached: 0,
         enemiesDefeated: 0,
+        duelDamageDealt: 0,
+        bossDefeated: false,
+        coinsCollected: [],
         completed: false,
       },
     });

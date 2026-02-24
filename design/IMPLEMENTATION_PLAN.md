@@ -282,7 +282,7 @@
 
 ### Tasks
 
-- [ ] **5.1** — Flesh out core type definitions (`src/core/types/`):
+- [x] **5.1** — Flesh out core type definitions (`src/core/types/`):
   - `hero.ts` — `HeroId`, `HeroDefinition`, `HeroBaseStats`, `DerivedHeroStats`, `AbilityDefinition`, `HeroAssetManifest`.
   - `enemy.ts` — `EnemyId`, `EnemyDefinition`, `EnemyBehaviorType`, `EnemyAnimationSet`, `EnemyEncounter`.
   - `upgrade.ts` — `UpgradeCategory`, `UpgradeLevel`, `UpgradeGrid`, `UpgradeCategoryData`.
@@ -290,23 +290,23 @@
   - `combat.ts` — `AttackResult`, `DamageModifiers`, `AttackType`, `DuelState`, `DamageEvent`.
   - `run.ts` — `RunResult`, `RunPhase`, `RewardBreakdown`, `EnemyInstance`, `CoinInstance`.
   - `save.ts` — `SaveData`, `HeroSaveData`, full interfaces, `SAVE_DATA_VERSION`, `createDefaultSaveData()`.
-- [ ] **5.2** — Create Barbarian hero data (`src/data/heroes/barbarian.data.ts`):
+- [x] **5.2** — Create Barbarian hero data (`src/data/heroes/barbarian.data.ts`):
   - Base stats, 6 upgrade categories with costs and effect-per-level tables.
   - Ability definitions (axe swing, block, leap attack).
-- [ ] **5.3** — Create Barbarian enemy data (`src/data/enemies/barbarian-enemies.data.ts`):
+- [x] **5.3** — Create Barbarian enemy data (`src/data/enemies/barbarian-enemies.data.ts`):
   - Wolf, Swordsman, Shieldbearer (Chapter 1).
   - Highland Archer, Pikeman (Chapter 2).
   - Berserker, War Hound Handler (Chapter 3).
   - Stats: HP, damage, range, behavior type, loot value.
-- [ ] **5.4** — Create chapter definitions (`src/data/chapters/barbarian-chapters.data.ts`):
+- [x] **5.4** — Create chapter definitions (`src/data/chapters/barbarian-chapters.data.ts`):
   - Chapter 1, 2, 3: enemy rosters, boss config, segment layouts.
-- [ ] **5.5** — Create balance constants (`src/data/balance.data.ts`):
+- [x] **5.5** — Create balance constants (`src/data/balance.data.ts`):
   - `CHAPTER_MULTIPLIERS`, `MAX_RUN_DURATION_MS`, reward rates, post-duel heal percent.
-- [ ] **5.6** — Create lore data (`src/data/lore.data.ts`):
+- [x] **5.6** — Create lore data (`src/data/lore.data.ts`):
   - Death messages per enemy type, victory lines, boss dialogue.
-- [ ] **5.7** — Update barrel exports: `src/core/types/` via `src/core/index.ts`, `src/data/index.ts`.
-- [ ] **5.8** — Write type-level smoke tests (import and assert data satisfies types).
-- [ ] **5.9** — All scripts pass.
+- [x] **5.7** — Update barrel exports: `src/core/types/` via `src/core/index.ts`, `src/data/index.ts`.
+- [x] **5.8** — Write type-level smoke tests (import and assert data satisfies types).
+- [x] **5.9** — All scripts pass.
 
 ### Acceptance Criteria
 
