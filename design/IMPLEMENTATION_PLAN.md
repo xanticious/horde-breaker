@@ -1,6 +1,6 @@
 # Horde Breaker — Implementation Plan
 
-> **Last updated:** 2026-02-19
+> **Last updated:** 2026-02-26
 > **Methodology:** Agile — incremental delivery, always-shippable trunk
 > **Scope:** MVP (Milestone 1) — Barbarian Berzerker only
 > **Companion docs:** `DESIGN_NOTES.md`, `IMPLEMENTATION_DESIGN.md`
@@ -322,20 +322,20 @@
 
 ### Tasks
 
-- [ ] **6.1** — Create `GameRenderer` (`src/rendering/GameRenderer.ts`):
+- [x] **6.1** — Create `GameRenderer` (`src/rendering/GameRenderer.ts`):
   - Async `init(canvasParent)` — creates PixiJS `Application`, appends canvas.
   - `startGameLoop(onUpdate)` — adds ticker callback.
   - `destroy()` — cleans up PixiJS resources.
-- [ ] **6.2** — Update `GameScreen.tsx`:
+- [x] **6.2** — Update `GameScreen.tsx`:
   - Create a `canvasRef` div.
   - `useEffect` initializes `GameRenderer`, starts the game loop, cleans up on unmount.
   - Renders a simple animated rectangle or bouncing sprite as proof of life.
-- [ ] **6.3** — Create `GameScreen.module.css`:
+- [x] **6.3** — Create `GameScreen.module.css`:
   - Canvas fills the screen area. Aspect ratio 16:9 letterbox.
-- [ ] **6.4** — Write `GameRenderer.test.ts`:
+- [x] **6.4** — Write `GameRenderer.test.ts`:
   - Test that init/destroy lifecycle doesn't throw (mocked canvas).
-- [ ] **6.5** — Verify: navigate to Game screen, see animated content, navigate away and back without errors or memory leaks.
-- [ ] **6.6** — All scripts pass.
+- [x] **6.5** — Verify: navigate to Game screen, see animated content, navigate away and back without errors or memory leaks.
+- [x] **6.6** — All scripts pass.
 
 ### Acceptance Criteria
 

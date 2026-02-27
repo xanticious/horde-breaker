@@ -1,7 +1,21 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import App from "./App";
+
+// GameScreen renders a PixiJS canvas, which requires WebGL/Canvas2D — not available
+// in jsdom. Mock the renderer so navigation tests work without a real GPU context.
+// Must use a regular function (not arrow) so `new GameRenderer()` works.
+vi.mock("@rendering/GameRenderer", () => {
+  const GameRenderer = vi.fn().mockImplementation(function (
+    this: Record<string, unknown>,
+  ) {
+    this.init = vi.fn().mockResolvedValue(undefined);
+    this.startGameLoop = vi.fn();
+    this.destroy = vi.fn();
+  });
+  return { GameRenderer };
+});
 
 describe("App — screen navigation", () => {
   it("renders the title screen on load", () => {
@@ -36,7 +50,9 @@ describe("App — screen navigation", () => {
     await user.click(screen.getByRole("button", { name: /barbarian berzerker/i }));
     await user.click(screen.getByRole("button", { name: /start run/i }));
 
-    expect(screen.getByText(/game screen — placeholder/i)).toBeInTheDocument();
+    // GameScreen no longer has a placeholder heading — PixiJS renders into the
+    // canvas div. Assert on the always-visible End Run button instead.
+    expect(screen.getByRole("button", { name: /end run/i })).toBeInTheDocument();
   });
 
   it("navigates from Game → Results → Upgrade on End Run + Continue", async () => {
@@ -83,6 +99,7 @@ describe("App — screen navigation", () => {
     // Second run
     await user.click(screen.getByRole("button", { name: /start run/i }));
 
-    expect(screen.getByText(/game screen — placeholder/i)).toBeInTheDocument();
+    // GameScreen shows the End Run button when active (no placeholder heading)
+    expect(screen.getByRole("button", { name: /end run/i })).toBeInTheDocument();
   });
 });
