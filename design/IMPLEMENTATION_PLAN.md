@@ -351,25 +351,25 @@
 
 ### Tasks
 
-- [ ] **7.1** — Create `ParallaxBackground` (`src/rendering/display/ParallaxBackground.ts`):
+- [x] **7.1** — Create `ParallaxBackground` (`src/rendering/display/ParallaxBackground.ts`):
   - 3–4 `TilingSprite` layers scrolling at different speeds.
   - Placeholder textures (solid or gradient colored rectangles) until real art is ready.
-- [ ] **7.2** — Create `HeroDisplay` (`src/rendering/display/HeroDisplay.ts`):
+- [x] **7.2** — Create `HeroDisplay` (`src/rendering/display/HeroDisplay.ts`):
   - A placeholder sprite (colored rectangle or simple shape) positioned on the left side.
   - Methods: `setStance(stance)`, `setPosition(x, y)`.
-- [ ] **7.3** — Create `TraversalScene` (`src/rendering/scenes/TraversalScene.ts`):
+- [x] **7.3** — Create `TraversalScene` (`src/rendering/scenes/TraversalScene.ts`):
   - Composes `ParallaxBackground` + `HeroDisplay`.
   - `update(state, deltaMs)` scrolls the background based on hero speed.
-- [ ] **7.4** — Create `TraversalMachine` (`src/core/machines/traversalMachine.ts`):
+- [x] **7.4** — Create `TraversalMachine` (`src/core/machines/traversalMachine.ts`):
   - Context: `speed`, `heroPosition`, `segmentLength`, `heroStance`.
   - Handles `TICK` events to advance position.
   - Emits `SEGMENT_COMPLETE` when end of segment reached.
-- [ ] **7.5** — Write `traversalMachine.test.ts`:
+- [x] **7.5** — Write `traversalMachine.test.ts`:
   - Test that position advances on TICK.
   - Test segment completion.
-- [ ] **7.6** — Wire `TraversalScene` into `GameScreen` + `GameRenderer`.
-- [ ] **7.7** — Verify: entering the Game screen shows a scrolling world with a hero placeholder.
-- [ ] **7.8** — All scripts pass.
+- [x] **7.6** — Wire `TraversalScene` into `GameScreen` + `GameRenderer`.
+- [x] **7.7** — Verify: entering the Game screen shows a scrolling world with a hero placeholder.
+- [x] **7.8** — All scripts pass.
 
 ### Acceptance Criteria
 

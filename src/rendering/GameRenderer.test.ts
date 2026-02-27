@@ -1,6 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GameRenderer } from "./GameRenderer";
 
+// TraversalScene uses PixiJS GPU APIs that jsdom cannot provide; mock the whole
+// module so GameRenderer tests remain focused on lifecycle behaviour.
+vi.mock("./scenes/TraversalScene", () => {
+  const TraversalScene = vi.fn().mockImplementation(function (
+    this: Record<string, unknown>,
+  ) {
+    this.container = { destroy: vi.fn() };
+    this.update = vi.fn();
+    this.destroy = vi.fn();
+  });
+  return { TraversalScene };
+});
+
+// Also mock the data import that GameRenderer pulls in so tests need no real
+// hero data; the default runSpeed of 320 is fine but the mock avoids module
+// resolution issues in the test environment.
+vi.mock("@data/heroes/barbarian.data", () => ({
+  BARBARIAN_HERO: { baseStats: { runSpeed: 320 } },
+}));
+
 // PixiJS requires a real GPU/canvas context which jsdom cannot provide.
 // Mock the entire module so lifecycle tests run in the Vitest environment.
 // Using regular function constructors (not arrow functions) so `new Application()` works.

@@ -1,4 +1,7 @@
-import { Application, Graphics, Container } from "pixi.js";
+import { Application } from "pixi.js";
+import { TraversalScene } from "./scenes/TraversalScene";
+import type { TraversalContext } from "@core/machines/traversalMachine";
+import { BARBARIAN_HERO } from "@data/heroes/barbarian.data";
 
 export type UpdateCallback = (deltaMs: number) => void;
 
@@ -9,9 +12,19 @@ export type UpdateCallback = (deltaMs: number) => void;
 export class GameRenderer {
   private app: Application | null = null;
   private tickerCallback: ((ticker: { deltaMS: number }) => void) | null = null;
+  private traversalScene: TraversalScene | null = null;
   // Tracks whether destroy() was called before init() resolved, so the async
   // init path can detect the stale state and clean up the Application itself.
   private _destroyed = false;
+
+  // Standalone traversal context used until RunMachine (Sprint 11) takes over.
+  // Drives the parallax scroll and hero placeholder animation.
+  private _traversalContext: TraversalContext = {
+    speed: BARBARIAN_HERO.baseStats.runSpeed,
+    heroPosition: 0,
+    segmentLength: 100_000, // Effectively infinite for standalone demo
+    heroStance: "running",
+  };
 
   /**
    * Async init required by PixiJS 8 — Application.init() must be awaited.
@@ -43,19 +56,40 @@ export class GameRenderer {
     this.app = app;
     canvasParent.appendChild(this.app.canvas);
 
-    // Add the proof-of-life bouncing rectangle scene until real game content lands
-    this._createPlaceholderScene();
+    // Sprint 7: TraversalScene replaces the Sprint 6 proof-of-life placeholder.
+    this.traversalScene = new TraversalScene(app);
+    this.app.stage.addChild(this.traversalScene.container);
   }
 
   /**
    * Registers an update callback that fires every frame via the PixiJS ticker.
+   * The callback receives deltaMs and the renderer drives the TraversalScene
+   * from its own internal state until RunMachine (Sprint 11) takes over.
    * Must be called after init() resolves.
    */
   startGameLoop(onUpdate: UpdateCallback): void {
     if (!this.app) return;
 
     this.tickerCallback = (ticker) => {
-      onUpdate(ticker.deltaMS);
+      const deltaMs = ticker.deltaMS;
+
+      // Advance the standalone traversal context so the scene scrolls
+      // even before RunMachine is wired up in Sprint 11.
+      if (this.traversalScene && this.app) {
+        this._traversalContext = {
+          ...this._traversalContext,
+          heroPosition:
+            this._traversalContext.heroPosition + this._traversalContext.speed * (deltaMs / 1000),
+        };
+        this.traversalScene.update(
+          this._traversalContext,
+          deltaMs,
+          this.app.screen.width,
+          this.app.screen.height,
+        );
+      }
+
+      onUpdate(deltaMs);
     };
 
     this.app.ticker.add(this.tickerCallback);
@@ -75,56 +109,11 @@ export class GameRenderer {
       this.tickerCallback = null;
     }
 
+    this.traversalScene?.destroy();
+    this.traversalScene = null;
+
     // true = remove canvas from DOM; true = destroy children, textures, context
     this.app.destroy(true, true);
     this.app = null;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Private helpers
-  // ---------------------------------------------------------------------------
-
-  /**
-   * A simple animated rectangle that proves the ticker loop is alive.
-   * Replaced in Sprint 7 when TraversalScene ships real content.
-   */
-  private _createPlaceholderScene(): void {
-    if (!this.app) return;
-
-    const container = new Container();
-    this.app.stage.addChild(container);
-
-    // Accent-coloured rectangle
-    const rect = new Graphics();
-    rect.rect(0, 0, 80, 80).fill({ color: 0xe94560 });
-    rect.pivot.set(40, 40);
-    container.addChild(rect);
-
-    // Label via another small rectangle strip
-    const label = new Graphics();
-    label.rect(0, 0, 200, 4).fill({ color: 0x0f3460 });
-    label.pivot.set(100, 2);
-    label.y = 60;
-    container.addChild(label);
-
-    let elapsed = 0;
-
-    this.app.ticker.add((ticker) => {
-      if (!this.app) return;
-
-      elapsed += ticker.deltaMS;
-
-      const w = this.app.screen.width;
-      const h = this.app.screen.height;
-
-      // Bounce rect across the screen
-      const t = elapsed / 1000;
-      rect.x = (Math.cos(t * 1.2) * 0.4 + 0.5) * w;
-      rect.y = (Math.sin(t * 0.8) * 0.4 + 0.5) * h;
-      rect.rotation = t;
-
-      label.x = (Math.cos(t * 0.5 + 1) * 0.35 + 0.5) * w;
-      label.y = (Math.sin(t * 0.7 + 2) * 0.35 + 0.5) * h;
-    });
   }
 }
