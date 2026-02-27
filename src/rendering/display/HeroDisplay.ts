@@ -12,10 +12,6 @@ const STANCE_COLORS: Record<HeroStance, number> = {
   climbing: 0xbd93f9,
 };
 
-// Design resolution used to normalise heroPosition (0–1920)
-const DESIGN_WIDTH = 1920;
-const DESIGN_HEIGHT = 1080;
-
 /**
  * Placeholder hero sprite for Sprint 7 — a coloured rectangle that changes
  * colour based on stance. Real spritesheet animations replace this in Sprint 7+.

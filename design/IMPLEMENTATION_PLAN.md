@@ -385,26 +385,26 @@
 
 ### Tasks
 
-- [ ] **8.1** — Create `InputManager` (`src/input/InputManager.ts`):
+- [x] **8.1** — Create `InputManager` (`src/input/InputManager.ts`):
   - Polls keyboard state. Returns `InputSnapshot` with active `GameAction`s.
   - Basic implementation — no remapping yet.
-- [ ] **8.2** — Create input types (`src/input/types.ts`): `GameAction` enum, `InputSnapshot`, `InputMap`.
-- [ ] **8.3** — Create `InputMap.ts` with `DEFAULT_INPUT_MAP`.
-- [ ] **8.4** — Extend `TraversalMachine` to handle obstacles:
+- [x] **8.2** — Create input types (`src/input/types.ts`): `GameAction` enum, `InputSnapshot`, `InputMap`.
+- [x] **8.3** — Create `InputMap.ts` with `DEFAULT_INPUT_MAP`.
+- [x] **8.4** — Extend `TraversalMachine` to handle obstacles:
   - Time-tax obstacles: hero stops and climbs if not jumped.
   - Health-tax obstacles: hero takes damage if not jumped/ducked.
   - Accept `JUMP`, `DUCK` events from input.
-- [ ] **8.5** — Create `ObstacleDisplay` (`src/rendering/display/ObstacleDisplay.ts`) — placeholder rectangles.
-- [ ] **8.6** — Create obstacle types (`src/core/entities/obstacles/obstacleBase.ts`): `TimeTax` vs `HealthTax`.
-- [ ] **8.7** — Create HUD components (`src/ui/components/HUD/`):
+- [x] **8.5** — Create `ObstacleDisplay` (`src/rendering/display/ObstacleDisplay.ts`) — placeholder rectangles.
+- [x] **8.6** — Create obstacle types (`src/core/entities/obstacles/obstacleBase.ts`): `TimeTax` vs `HealthTax`.
+- [x] **8.7** — Create HUD components (`src/ui/components/HUD/`):
   - `HUD.tsx` — overlay container with `pointer-events: none`.
   - `Timer.tsx` — countdown display with green/orange/red color phases.
   - `HealthBar.tsx` — HP bar.
-- [ ] **8.8** — Create `timer.ts` (`src/core/systems/timer.ts`) + `timer.test.ts`:
+- [x] **8.8** — Create `timer.ts` (`src/core/systems/timer.ts`) + `timer.test.ts`:
   - `tickTimer()`, `getTimerPhase()`, `isTimerExpired()`.
-- [ ] **8.9** — Wire HUD into `GameScreen` (React overlay on top of PixiJS canvas).
-- [ ] **8.10** — Write `InputManager.test.ts`.
-- [ ] **8.11** — All scripts pass.
+- [x] **8.9** — Wire HUD into `GameScreen` (React overlay on top of PixiJS canvas).
+- [x] **8.10** — Write `InputManager.test.ts`.
+- [x] **8.11** — All scripts pass.
 
 ### Acceptance Criteria
 

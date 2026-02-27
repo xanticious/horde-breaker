@@ -1,6 +1,6 @@
 import { Application } from "pixi.js";
 import { TraversalScene } from "./scenes/TraversalScene";
-import type { TraversalContext } from "@core/machines/traversalMachine";
+import type { TraversalContext, TraversalEvent } from "@core/machines/traversalMachine";
 import { BARBARIAN_HERO } from "@data/heroes/barbarian.data";
 
 export type UpdateCallback = (deltaMs: number) => void;
@@ -21,10 +21,23 @@ export class GameRenderer {
   // Drives the parallax scroll and hero placeholder animation.
   private _traversalContext: TraversalContext = {
     speed: BARBARIAN_HERO.baseStats.runSpeed,
+    baseSpeed: BARBARIAN_HERO.baseStats.runSpeed,
     heroPosition: 0,
     segmentLength: 100_000, // Effectively infinite for standalone demo
     heroStance: "running",
+    obstacles: [],
+    currentHp: BARBARIAN_HERO.baseStats.maxHp,
+    maxHp: BARBARIAN_HERO.baseStats.maxHp,
+    climbRemainingMs: 0,
   };
+
+  /**
+   * Replace the renderer's traversal snapshot with the latest machine context.
+   * This keeps rendering strictly read-only relative to XState state.
+   */
+  setTraversalContext(context: TraversalContext): void {
+    this._traversalContext = context;
+  }
 
   /**
    * Async init required by PixiJS 8 — Application.init() must be awaited.
@@ -62,6 +75,45 @@ export class GameRenderer {
   }
 
   /**
+   * Accept input-derived traversal events from GameScreen so the standalone
+   * traversal context (used before RunMachine in Sprint 11) reflects player input.
+   */
+  sendTraversalEvent(event: TraversalEvent): void {
+    const ctx = this._traversalContext;
+    switch (event.type) {
+      case "JUMP":
+        this._traversalContext = { ...ctx, heroStance: "jumping" };
+        break;
+      case "DUCK":
+        this._traversalContext = { ...ctx, heroStance: "ducking" };
+        break;
+      case "STAND":
+        // Only reset if not locked into climbing
+        if (ctx.heroStance !== "climbing") {
+          this._traversalContext = { ...ctx, heroStance: "running" };
+        }
+        break;
+      case "SPRINT":
+        this._traversalContext = {
+          ...ctx,
+          heroStance: "sprinting",
+          speed: ctx.baseSpeed * 1.5,
+        };
+        break;
+      case "SLOW":
+        this._traversalContext = {
+          ...ctx,
+          heroStance: "running",
+          speed: ctx.baseSpeed * 0.6,
+        };
+        break;
+      case "TICK":
+        // TICK is driven by the game loop internally — callers shouldn't send it.
+        break;
+    }
+  }
+
+  /**
    * Registers an update callback that fires every frame via the PixiJS ticker.
    * The callback receives deltaMs and the renderer drives the TraversalScene
    * from its own internal state until RunMachine (Sprint 11) takes over.
@@ -73,14 +125,9 @@ export class GameRenderer {
     this.tickerCallback = (ticker) => {
       const deltaMs = ticker.deltaMS;
 
-      // Advance the standalone traversal context so the scene scrolls
-      // even before RunMachine is wired up in Sprint 11.
+      // Render from the latest traversal snapshot. The machine remains the
+      // source of truth; rendering never mutates traversal state directly.
       if (this.traversalScene && this.app) {
-        this._traversalContext = {
-          ...this._traversalContext,
-          heroPosition:
-            this._traversalContext.heroPosition + this._traversalContext.speed * (deltaMs / 1000),
-        };
         this.traversalScene.update(
           this._traversalContext,
           deltaMs,

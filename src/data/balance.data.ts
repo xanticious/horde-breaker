@@ -49,3 +49,14 @@ export const TIMER_WARNING_THRESHOLD_MS = 30_000;
 
 /** Remaining milliseconds at which the timer transitions to "critical" phase. */
 export const TIMER_CRITICAL_THRESHOLD_MS = 15_000;
+
+// ── Obstacles ────────────────────────────────────────────────────────────────
+
+/**
+ * How long the hero is locked in a "climbing" animation after hitting a
+ * time-tax obstacle without jumping. Hero position does not advance during this window.
+ */
+export const TIME_TAX_CLIMB_DURATION_MS = 2_000;
+
+/** HP damage dealt when the hero runs into a health-tax obstacle without jumping or ducking. */
+export const HEALTH_TAX_DAMAGE = 20;

@@ -7,10 +7,9 @@ import App from "./App";
 // in jsdom. Mock the renderer so navigation tests work without a real GPU context.
 // Must use a regular function (not arrow) so `new GameRenderer()` works.
 vi.mock("@rendering/GameRenderer", () => {
-  const GameRenderer = vi.fn().mockImplementation(function (
-    this: Record<string, unknown>,
-  ) {
+  const GameRenderer = vi.fn().mockImplementation(function (this: Record<string, unknown>) {
     this.init = vi.fn().mockResolvedValue(undefined);
+    this.setTraversalContext = vi.fn();
     this.startGameLoop = vi.fn();
     this.destroy = vi.fn();
   });

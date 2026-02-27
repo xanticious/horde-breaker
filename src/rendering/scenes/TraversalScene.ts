@@ -2,12 +2,13 @@ import { Container } from "pixi.js";
 import type { Application } from "pixi.js";
 import { ParallaxBackground } from "../display/ParallaxBackground";
 import { HeroDisplay } from "../display/HeroDisplay";
+import { ObstacleDisplay } from "../display/ObstacleDisplay";
 import type { HeroStance } from "../display/HeroDisplay";
 import type { TraversalContext } from "@core/machines/traversalMachine";
 
 /**
  * Composes all visual elements for the traversal phase:
- * scrolling parallax background and hero placeholder.
+ * scrolling parallax background, hero placeholder, and obstacle placeholders.
  *
  * `update()` is called once per frame from the game loop with the latest
  * TraversalMachine context. The TraversalScene reads state; it never mutates it.
@@ -16,14 +17,17 @@ export class TraversalScene {
   readonly container: Container;
   private readonly parallax: ParallaxBackground;
   private readonly heroDisplay: HeroDisplay;
+  private readonly obstacleDisplay: ObstacleDisplay;
 
   constructor(app: Application) {
     this.container = new Container();
     this.parallax = new ParallaxBackground(app);
     this.heroDisplay = new HeroDisplay();
+    this.obstacleDisplay = new ObstacleDisplay();
 
-    // Layer order: background first, hero on top
+    // Layer order: background → obstacles → hero on top
     this.container.addChild(this.parallax.container);
+    this.container.addChild(this.obstacleDisplay.container);
     this.container.addChild(this.heroDisplay.container);
 
     // Initial position — keeps the hero at a fixed screen position while
@@ -51,11 +55,14 @@ export class TraversalScene {
 
     this.heroDisplay.setStance(state.heroStance as HeroStance);
     this.heroDisplay.setPosition(screenWidth, screenHeight);
+
+    this.obstacleDisplay.update(state.obstacles, state.heroPosition, screenWidth, screenHeight);
   }
 
   destroy(): void {
     this.parallax.destroy();
     this.heroDisplay.destroy();
+    this.obstacleDisplay.destroy();
     this.container.destroy({ children: true });
   }
 }

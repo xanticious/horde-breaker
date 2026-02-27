@@ -1,17 +1,38 @@
 import { createActor } from "xstate";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { traversalMachine } from "./traversalMachine";
+import type { ObstacleInstance } from "@core/entities/obstacles/obstacleBase";
+
+const DEFAULT_HP = 100;
 
 /** Helper: create and start a traversal actor with given inputs. */
-function makeActor(options?: { speed?: number; segmentLength?: number }) {
+function makeActor(options?: {
+  speed?: number;
+  segmentLength?: number;
+  obstacles?: ObstacleInstance[];
+  currentHp?: number;
+}) {
   const actor = createActor(traversalMachine, {
     input: {
       speed: options?.speed ?? 320,
       segmentLength: options?.segmentLength ?? 1000,
+      obstacles: options?.obstacles ?? [],
+      currentHp: options?.currentHp ?? DEFAULT_HP,
+      maxHp: DEFAULT_HP,
     },
   });
   actor.start();
   return actor;
+}
+
+/** Build a time-tax obstacle at a given position. */
+function timeTax(position: number, id = "tt1"): ObstacleInstance {
+  return { id, type: "timeTax", position, triggered: false };
+}
+
+/** Build a health-tax obstacle at a given position. */
+function healthTax(position: number, id = "ht1"): ObstacleInstance {
+  return { id, type: "healthTax", position, triggered: false };
 }
 
 describe("traversalMachine", () => {
@@ -37,6 +58,11 @@ describe("traversalMachine", () => {
       const actor = makeActor();
       expect(actor.getSnapshot().context.heroStance).toBe("running");
     });
+
+    it("initialises HP from input", () => {
+      const actor = makeActor({ currentHp: 80 });
+      expect(actor.getSnapshot().context.currentHp).toBe(80);
+    });
   });
 
   describe("TICK advances position", () => {
@@ -50,7 +76,6 @@ describe("traversalMachine", () => {
     it("advances by a fractional amount for small deltaMs", () => {
       const actor = makeActor({ speed: 320, segmentLength: 10_000 });
       actor.send({ type: "TICK", deltaMs: 16.67 }); // ~1 frame at 60 fps
-      // 320 × 0.01667 ≈ 5.33 px
       expect(actor.getSnapshot().context.heroPosition).toBeCloseTo(320 * (16.67 / 1000));
     });
 
@@ -66,7 +91,6 @@ describe("traversalMachine", () => {
   describe("segment completion", () => {
     it("transitions to segmentDone when position reaches segmentLength", () => {
       const actor = makeActor({ speed: 1000, segmentLength: 1000 });
-      // One tick of 1 second at 1000 px/s should complete the segment
       actor.send({ type: "TICK", deltaMs: 1000 });
       expect(actor.getSnapshot().value).toBe("segmentDone");
     });
@@ -90,7 +114,6 @@ describe("traversalMachine", () => {
     it("stays in segmentDone after completion (final state)", () => {
       const actor = makeActor({ speed: 1000, segmentLength: 100 });
       actor.send({ type: "TICK", deltaMs: 200 });
-      // Sending more events after finalisation should not change state
       actor.send({ type: "TICK", deltaMs: 200 });
       expect(actor.getSnapshot().value).toBe("segmentDone");
     });
@@ -116,7 +139,7 @@ describe("traversalMachine", () => {
       expect(actor.getSnapshot().context.heroStance).toBe("running");
     });
 
-    it("changes heroStance to sprinting on SPRINT and increases speed", () => {
+    it("changes heroStance to sprinting on SPRINT and increases speed (× 1.5 base)", () => {
       const actor = makeActor({ speed: 320 });
       actor.send({ type: "SPRINT" });
       const { heroStance, speed } = actor.getSnapshot().context;
@@ -124,12 +147,109 @@ describe("traversalMachine", () => {
       expect(speed).toBeCloseTo(480); // 320 × 1.5
     });
 
-    it("changes heroStance to running on SLOW and reduces speed", () => {
+    it("SLOW uses baseSpeed so speed does not compound", () => {
       const actor = makeActor({ speed: 320 });
       actor.send({ type: "SLOW" });
       const { heroStance, speed } = actor.getSnapshot().context;
       expect(heroStance).toBe("running");
       expect(speed).toBeCloseTo(192); // 320 × 0.6
+    });
+  });
+
+  describe("obstacle — time-tax (jumped)", () => {
+    it("skips time-tax obstacle cleanly when jumping — no stance change, no emit", () => {
+      // Obstacle sits at position 200; hero will arrive just after one tick at 320 px/s
+      const obs = timeTax(200);
+      const actor = makeActor({ speed: 200, segmentLength: 5000, obstacles: [obs] });
+      const emittedTimeTax: unknown[] = [];
+      actor.on("TIME_TAX_HIT", (e) => emittedTimeTax.push(e));
+
+      actor.send({ type: "JUMP" });
+      actor.send({ type: "TICK", deltaMs: 1000 }); // advances to pos 200
+
+      expect(actor.getSnapshot().context.heroStance).toBe("jumping");
+      expect(actor.getSnapshot().context.obstacles[0].triggered).toBe(true);
+      expect(emittedTimeTax).toHaveLength(0);
+    });
+  });
+
+  describe("obstacle — time-tax (not jumped)", () => {
+    it("triggers climbing stance when hero is not jumping", () => {
+      const obs = timeTax(200);
+      const actor = makeActor({ speed: 200, segmentLength: 5000, obstacles: [obs] });
+      const emittedTimeTax: unknown[] = [];
+      actor.on("TIME_TAX_HIT", (e) => emittedTimeTax.push(e));
+
+      actor.send({ type: "TICK", deltaMs: 1000 }); // no jump — hits obstacle
+
+      expect(actor.getSnapshot().context.heroStance).toBe("climbing");
+      expect(actor.getSnapshot().context.obstacles[0].triggered).toBe(true);
+      expect(emittedTimeTax).toHaveLength(1);
+    });
+
+    it("hero position does not advance while climbing", () => {
+      const obs = timeTax(200);
+      const actor = makeActor({ speed: 200, segmentLength: 5000, obstacles: [obs] });
+      actor.send({ type: "TICK", deltaMs: 1000 }); // triggers climb
+
+      const posAfterHit = actor.getSnapshot().context.heroPosition;
+      actor.send({ type: "TICK", deltaMs: 500 }); // still climbing
+
+      // Should not advance while climb lock is active
+      expect(actor.getSnapshot().context.heroPosition).toBeCloseTo(posAfterHit);
+    });
+
+    it("hero resumes running after climbRemainingMs reaches 0", () => {
+      const obs = timeTax(200);
+      // 2 000 ms climb duration
+      const actor = makeActor({ speed: 200, segmentLength: 5000, obstacles: [obs] });
+      actor.send({ type: "TICK", deltaMs: 1000 }); // triggers climb
+      actor.send({ type: "TICK", deltaMs: 2000 }); // burns off full climb duration
+
+      expect(actor.getSnapshot().context.heroStance).toBe("running");
+      expect(actor.getSnapshot().context.climbRemainingMs).toBe(0);
+    });
+  });
+
+  describe("obstacle — health-tax (dodged)", () => {
+    it("skips damage when hero is jumping", () => {
+      const obs = healthTax(200);
+      const actor = makeActor({ speed: 200, segmentLength: 5000, obstacles: [obs] });
+      actor.send({ type: "JUMP" });
+      actor.send({ type: "TICK", deltaMs: 1000 });
+      expect(actor.getSnapshot().context.currentHp).toBe(DEFAULT_HP);
+    });
+
+    it("skips damage when hero is ducking", () => {
+      const obs = healthTax(200);
+      const actor = makeActor({ speed: 200, segmentLength: 5000, obstacles: [obs] });
+      actor.send({ type: "DUCK" });
+      actor.send({ type: "TICK", deltaMs: 1000 });
+      expect(actor.getSnapshot().context.currentHp).toBe(DEFAULT_HP);
+    });
+  });
+
+  describe("obstacle — health-tax (hit)", () => {
+    it("reduces HP when hero is not jumping or ducking", () => {
+      const obs = healthTax(200);
+      const actor = makeActor({ speed: 200, segmentLength: 5000, obstacles: [obs] });
+      const emittedHealthTax: { damage: number }[] = [];
+      actor.on("HEALTH_TAX_HIT", (e) => emittedHealthTax.push(e as { damage: number }));
+
+      actor.send({ type: "TICK", deltaMs: 1000 });
+
+      expect(actor.getSnapshot().context.currentHp).toBeLessThan(DEFAULT_HP);
+      expect(emittedHealthTax).toHaveLength(1);
+      expect(emittedHealthTax[0].damage).toBeGreaterThan(0);
+    });
+
+    it("does not trigger the same obstacle twice", () => {
+      const obs = healthTax(200);
+      const actor = makeActor({ speed: 200, segmentLength: 5000, obstacles: [obs] });
+      actor.send({ type: "TICK", deltaMs: 1000 }); // trigger
+      const hpAfterFirst = actor.getSnapshot().context.currentHp;
+      actor.send({ type: "TICK", deltaMs: 16 }); // still in range but already triggered
+      expect(actor.getSnapshot().context.currentHp).toBe(hpAfterFirst);
     });
   });
 
