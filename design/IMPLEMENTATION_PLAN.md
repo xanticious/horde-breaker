@@ -1,6 +1,6 @@
 # Horde Breaker — Implementation Plan
 
-> **Last updated:** 2026-02-26
+> **Last updated:** 2026-02-27
 > **Methodology:** Agile — incremental delivery, always-shippable trunk
 > **Scope:** MVP (Milestone 1) — Barbarian Berzerker only
 > **Companion docs:** `DESIGN_NOTES.md`, `IMPLEMENTATION_DESIGN.md`
@@ -422,23 +422,23 @@
 
 ### Tasks
 
-- [ ] **9.1** — Create `combat.ts` (`src/core/systems/combat.ts`) + `combat.test.ts`:
+- [x] **9.1** — Create `combat.ts` (`src/core/systems/combat.ts`) + `combat.test.ts`:
   - `calculateDamage()`, `calculateBlockResult()`, `isInRange()`, `calculateKnockback()`.
-- [ ] **9.2** — Create `health.ts` (`src/core/systems/health.ts`) + `health.test.ts`:
+- [x] **9.2** — Create `health.ts` (`src/core/systems/health.ts`) + `health.test.ts`:
   - `applyDamage()`, `isAlive()`, `applyPostDuelHeal()`.
-- [ ] **9.3** — Create `economy.ts` (`src/core/systems/economy.ts`) + `economy.test.ts`:
+- [x] **9.3** — Create `economy.ts` (`src/core/systems/economy.ts`) + `economy.test.ts`:
   - `calculateRunReward()`, `getUpgradeCost()`, `canAffordUpgrade()`, `applyUpgradePurchase()`.
-- [ ] **9.4** — Create `progression.ts` (`src/core/systems/progression.ts`) + `progression.test.ts`:
+- [x] **9.4** — Create `progression.ts` (`src/core/systems/progression.ts`) + `progression.test.ts`:
   - `deriveHeroStats()` — applies all upgrade levels to base stats.
-- [ ] **9.5** — Create `levelGenerator.ts` (`src/core/systems/levelGenerator.ts`) + `levelGenerator.test.ts`:
+- [x] **9.5** — Create `levelGenerator.ts` (`src/core/systems/levelGenerator.ts`) + `levelGenerator.test.ts`:
   - `generateLevel()` — procedural enemy placement using seeded PRNG.
-- [ ] **9.6** — Create utility modules:
+- [x] **9.6** — Create utility modules:
   - `src/utils/math.ts` + `math.test.ts` — `clamp()`, `lerp()`, `randomRange()`.
   - `src/utils/random.ts` + `random.test.ts` — seeded PRNG implementation.
   - `src/utils/timing.ts` — frame-rate-independent delta helpers.
   - `src/utils/constants.ts` — physics constants, magic numbers.
-- [ ] **9.7** — Update barrel exports.
-- [ ] **9.8** — All scripts pass, coverage on `src/core/systems/` ≥ 80%.
+- [x] **9.7** — Update barrel exports.
+- [x] **9.8** — All scripts pass, coverage on `src/core/systems/` ≥ 80%.
 
 ### Acceptance Criteria
 

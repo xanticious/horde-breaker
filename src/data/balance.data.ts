@@ -24,6 +24,9 @@ export const CHAPTER_MULTIPLIERS = {
 /** Currency awarded per percentage point of traversal distance covered. */
 export const DISTANCE_REWARD_PER_PERCENT = 1;
 
+/** Currency awarded per point of damage dealt to enemies during duel encounters. */
+export const DUEL_DAMAGE_REWARD_PER_POINT = 1;
+
 /** Currency awarded per enemy defeated in a duel. */
 export const ENEMY_KILL_REWARD = 50;
 
