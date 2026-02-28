@@ -454,15 +454,15 @@
 
 ### Tasks
 
-- [ ] **10.1** — Create enemy behavior interface (`src/core/entities/enemies/enemyBase.ts`):
+- [x] **10.1** — Create enemy behavior interface (`src/core/entities/enemies/enemyBase.ts`):
   - `IEnemyBehavior` — `decideAction()`, `getWindUpDuration()`, `getRecoveryDuration()`.
-- [ ] **10.2** — Create Wolf behavior (`src/core/entities/enemies/wolf.ts`) + `wolf.test.ts`:
+- [x] **10.2** — Create Wolf behavior (`src/core/entities/enemies/wolf.ts`) + `wolf.test.ts`:
   - Waits → pounces → retreats cycle.
-- [ ] **10.3** — Create `DuelMachine` (`src/core/machines/duelMachine.ts`):
+- [x] **10.3** — Create `DuelMachine` (`src/core/machines/duelMachine.ts`):
   - States: `idle`, `heroActing`, `enemyActing`, `recovery`, `enemyDefeated`, `heroDied`.
   - Handles: `ATTACK`, `BLOCK`, `JUMP`, `DUCK`, `MOVE_LEFT`, `MOVE_RIGHT`.
   - Commitment-based combat: input rejected while hero is mid-animation.
-- [ ] **10.4** — Write `duelMachine.test.ts`:
+- [x] **10.4** — Write `duelMachine.test.ts`:
   - Hero attacks → damage dealt.
   - Hero blocks → reduced damage.
   - Input rejected during animation (commitment).
