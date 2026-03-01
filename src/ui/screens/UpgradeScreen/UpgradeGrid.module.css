@@ -1,0 +1,100 @@
+.grid {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 640px;
+  font-size: var(--font-size-sm);
+}
+
+.categoryHeader,
+.levelHeader {
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.categoryHeader {
+  text-align: left;
+  min-width: 120px;
+}
+
+.categoryName {
+  padding: var(--space-2) var(--space-3);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  white-space: nowrap;
+  border-right: 1px solid var(--color-border-subtle);
+}
+
+.cell {
+  padding: var(--space-2);
+  text-align: center;
+  border: 1px solid var(--color-border-subtle);
+  min-width: 80px;
+  transition: background-color var(--transition-fast);
+}
+
+/* A level that has already been purchased */
+.purchased {
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+/* The next purchasable level — player has enough currency */
+.affordable {
+  background-color: transparent;
+}
+
+.affordable:hover {
+  background-color: var(--color-surface-alt);
+}
+
+/* The next purchasable level — player cannot afford it yet */
+.unaffordable {
+  background-color: transparent;
+  opacity: 0.6;
+}
+
+/* Locked future levels (must purchase current level first) */
+.locked {
+  background-color: transparent;
+  opacity: 0.3;
+}
+
+.cost {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.purchaseButton {
+  background: none;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  width: 100%;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.purchaseButton:hover:not(:disabled) {
+  background-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.purchaseButton:disabled {
+  border-color: var(--color-border);
+  color: var(--color-text-subtle);
+  cursor: not-allowed;
+  opacity: 0.5;
+}

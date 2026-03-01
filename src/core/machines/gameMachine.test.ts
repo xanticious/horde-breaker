@@ -220,4 +220,56 @@ describe("gameMachine", () => {
       expect(actor.getSnapshot().value).toBe("upgrade");
     });
   });
+
+  describe("upgrade — PURCHASE_UPGRADE", () => {
+    let actor: ReturnType<typeof createActor<typeof gameMachine>>;
+
+    // Nagivate to upgrade state with 350 ¤ earned (80dist + 3kills×50 + 120dmg).
+    beforeEach(() => {
+      actor = createActor(gameMachine);
+      actor.start();
+      actor.send({ type: "START_GAME" });
+      actor.send({ type: "SELECT_HERO", heroId: HeroId.Barbarian });
+      actor.send(MOCK_START_RUN);
+      actor.send({ type: "END_RUN", result: MOCK_RUN_RESULT });
+      actor.send({ type: "CONTINUE" });
+    });
+
+    it("deducts cost and increments upgrade level when guard passes", () => {
+      // Max Health step 1→2 costs 18 ¤.
+      actor.send({ type: "PURCHASE_UPGRADE", categoryId: "maxHealth" });
+
+      const heroSave = actor.getSnapshot().context.saveData.heroes[HeroId.Barbarian];
+      expect(heroSave?.currency).toBe(332); // 350 - 18
+      expect(heroSave?.upgrades["maxHealth"]).toBe(2);
+    });
+
+    it("ignores PURCHASE_UPGRADE when currency is insufficient", () => {
+      // Attempt to purchase when hero has no currency (fresh actor).
+      const freshActor = createActor(gameMachine);
+      freshActor.start();
+      freshActor.send({ type: "START_GAME" });
+      freshActor.send({ type: "SELECT_HERO", heroId: HeroId.Barbarian });
+      freshActor.send({ type: "PURCHASE_UPGRADE", categoryId: "maxHealth" });
+
+      const heroSave = freshActor.getSnapshot().context.saveData.heroes[HeroId.Barbarian];
+      expect(heroSave?.currency ?? 0).toBe(0);
+      expect(heroSave?.upgrades?.["maxHealth"] ?? 1).toBe(1);
+    });
+
+    it("stays in upgrade state after a purchase", () => {
+      actor.send({ type: "PURCHASE_UPGRADE", categoryId: "armor" });
+      expect(actor.getSnapshot().value).toBe("upgrade");
+    });
+
+    it("can purchase multiple categories independently", () => {
+      actor.send({ type: "PURCHASE_UPGRADE", categoryId: "maxHealth" }); // costs 18
+      actor.send({ type: "PURCHASE_UPGRADE", categoryId: "armor" }); // costs 18
+
+      const heroSave = actor.getSnapshot().context.saveData.heroes[HeroId.Barbarian];
+      expect(heroSave?.currency).toBe(314); // 350 - 18 - 18
+      expect(heroSave?.upgrades["maxHealth"]).toBe(2);
+      expect(heroSave?.upgrades["armor"]).toBe(2);
+    });
+  });
 });

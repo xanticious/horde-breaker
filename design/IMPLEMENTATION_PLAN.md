@@ -554,22 +554,22 @@
 
 ### Tasks
 
-- [ ] **13.1** — Create `UpgradeGrid.tsx` (`src/ui/screens/UpgradeScreen/UpgradeGrid.tsx`):
+- [x] **13.1** — Create `UpgradeGrid.tsx` (`src/ui/screens/UpgradeScreen/UpgradeGrid.tsx`):
   - 6 rows × 5 upgradeable levels.
   - Each cell shows: cost, purchased indicator, affordable highlight.
   - Click a cell → sends `PURCHASE_UPGRADE` to GameMachine.
-- [ ] **13.2** — Create `UpgradeScreen.module.css` and `UpgradeGrid` styles.
-- [ ] **13.3** — Update `GameMachine`:
+- [x] **13.2** — Create `UpgradeScreen.module.css` and `UpgradeGrid` styles.
+- [x] **13.3** — Update `GameMachine`:
   - `PURCHASE_UPGRADE` action: deducts cost, increments upgrade level in SaveData.
   - Guard: `canAffordUpgrade()`.
-- [ ] **13.4** — Verify `deriveHeroStats()` is called with updated upgrades when starting a new run.
-- [ ] **13.5** — Display current currency balance on the upgrade screen.
-- [ ] **13.6** — Write `UpgradeScreen.test.tsx`:
+- [x] **13.4** — Verify `deriveHeroStats()` is called with updated upgrades when starting a new run.
+- [x] **13.5** — Display current currency balance on the upgrade screen.
+- [x] **13.6** — Write `UpgradeScreen.test.tsx`:
   - Buttons disabled when currency is insufficient.
   - Purchasing an upgrade deducts currency and updates the grid.
   - Already-purchased levels are visually distinct.
-- [ ] **13.7** — Add "Start Run" and "Back to Hero Select" buttons to the upgrade screen.
-- [ ] **13.8** — All scripts pass.
+- [x] **13.7** — Add "Start Run" and "Back to Hero Select" buttons to the upgrade screen.
+- [x] **13.8** — All scripts pass.
 
 ### Acceptance Criteria
 

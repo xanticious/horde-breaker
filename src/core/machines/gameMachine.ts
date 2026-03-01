@@ -14,7 +14,13 @@ import { BARBARIAN_HERO } from "@data/heroes/barbarian.data";
 import { BARBARIAN_CHAPTERS } from "@data/chapters/barbarian-chapters.data";
 import { wolfBehavior } from "@core/entities/enemies/wolf";
 import { generateLevel } from "@core/systems/levelGenerator";
-import { calculateRunReward } from "@core/systems/economy";
+import {
+  calculateRunReward,
+  getUpgradeCost,
+  canAffordUpgrade,
+  applyUpgradePurchase,
+} from "@core/systems/economy";
+import type { UpgradeLevel } from "@core/types/upgrade";
 import { Logger } from "@debug/Logger";
 
 // ─── Module Logger ───────────────────────────────────────────────────────────
@@ -42,7 +48,8 @@ export type GameEvent =
   /** Legacy event kept for backward compatibility with existing tests and UI. */
   | { type: "END_RUN"; result: RunResult }
   | { type: "CONTINUE" }
-  | { type: "GO_TO_HERO_SELECT" };
+  | { type: "GO_TO_HERO_SELECT" }
+  | { type: "PURCHASE_UPGRADE"; categoryId: string };
 
 // ─── Context ────────────────────────────────────────────────────────────────
 
@@ -86,12 +93,74 @@ function addCurrencyToSave(save: SaveData, heroId: HeroId, amount: number): Save
   return { ...save, heroes: { ...save.heroes, [heroId]: updated } };
 }
 
+/**
+ * Applies a single upgrade purchase to the hero's save data, deducting the
+ * cost and incrementing the category's level. Uses BARBARIAN_HERO upgrade
+ * categories — MVP supports one hero only.
+ */
+function purchaseUpgradeInSave(save: SaveData, heroId: HeroId, categoryId: string): SaveData {
+  const heroSave = save.heroes[heroId];
+  // If no save record exists yet, create one with 0 currency — the guard
+  // already ensures affordability, so the purchase should always be valid here.
+  const existing: HeroSaveData = heroSave ?? {
+    heroId,
+    currency: 0,
+    upgrades: {},
+    currentChapter: ChapterId.Chapter1,
+    chaptersCompleted: [],
+    coinsCollected: [],
+    prestigeCount: 0,
+  };
+  const { upgrades, currency } = applyUpgradePurchase(
+    existing.upgrades,
+    categoryId,
+    existing.currency,
+    BARBARIAN_HERO.upgradeCategories as {
+      id: string;
+      costs: readonly number[];
+      effectPerLevel: readonly number[];
+      name: string;
+    }[],
+  );
+  return {
+    ...save,
+    heroes: { ...save.heroes, [heroId]: { ...existing, upgrades, currency } },
+  };
+}
+
 // ─── Machine ─────────────────────────────────────────────────────────────────
 
 export const gameMachine = setup({
   types: {
     context: {} as GameContext,
     events: {} as GameEvent,
+  },
+  guards: {
+    /**
+     * Allows PURCHASE_UPGRADE only when the selected hero can afford the next
+     * level of the given category. The economy `canAffordUpgrade` function is
+     * the single source of truth for affordability.
+     */
+    canAffordNextUpgrade: ({ context, event }) => {
+      if (event.type !== "PURCHASE_UPGRADE") return false;
+      const heroId = context.selectedHeroId;
+      if (!heroId) return false;
+      const heroSave = context.saveData.heroes[heroId];
+      const currency = heroSave?.currency ?? 0;
+      const upgrades = heroSave?.upgrades ?? {};
+      const currentLevel = (upgrades[event.categoryId] ?? 1) as UpgradeLevel;
+      const cost = getUpgradeCost(
+        event.categoryId,
+        currentLevel,
+        BARBARIAN_HERO.upgradeCategories as {
+          id: string;
+          costs: readonly number[];
+          effectPerLevel: readonly number[];
+          name: string;
+        }[],
+      );
+      return canAffordUpgrade(currency, cost);
+    },
   },
   actors: {
     runMachine,
@@ -242,6 +311,13 @@ export const gameMachine = setup({
           }),
         },
         GO_TO_HERO_SELECT: { target: "heroSelect" },
+        PURCHASE_UPGRADE: {
+          guard: "canAffordNextUpgrade",
+          actions: assign({
+            saveData: ({ context, event }) =>
+              purchaseUpgradeInSave(context.saveData, context.selectedHeroId!, event.categoryId),
+          }),
+        },
       },
     },
   },

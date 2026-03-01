@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--space-6);
   padding: var(--space-8);
   min-height: 100vh;
@@ -15,11 +15,22 @@
   font-size: var(--font-size-3xl);
   color: var(--color-text);
   letter-spacing: 0.04em;
+  margin-top: var(--space-4);
 }
 
-.placeholder {
+.heroLabel {
   font-size: var(--font-size-md);
   color: var(--color-text-muted);
+}
+
+.balance {
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+
+.currencyValue {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
 }
 
 .actions {
