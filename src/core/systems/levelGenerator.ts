@@ -54,11 +54,18 @@ export function generateLevel(chapter: ChapterDefinition, seed: number): EnemyEn
   const roster = shuffleArray([...chapter.enemyRoster], rng);
 
   // Build regular encounters round-robin from the shuffled roster.
-  const encounters: EnemyEncounter[] = positions.map((positionPercent, i) => ({
-    enemyId: roster[i % roster.length]!,
-    positionPercent,
-    isBoss: false,
-  }));
+  // 30% chance of a two-enemy encounter for variety — only when the roster
+  // has more than one distinct entry so the companion differs from the primary.
+  const encounters: EnemyEncounter[] = positions.map((positionPercent, i) => {
+    const primaryId = roster[i % roster.length]!;
+    const addSecond = roster.length > 1 && rng() < 0.3;
+    return {
+      enemyId: primaryId,
+      positionPercent,
+      isBoss: false,
+      ...(addSecond ? { additionalEnemyIds: [roster[(i + 1) % roster.length]!] } : {}),
+    };
+  });
 
   // Always append the boss at BOSS_POSITION_PERCENT.
   encounters.push({

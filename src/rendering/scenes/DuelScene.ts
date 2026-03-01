@@ -9,9 +9,20 @@ import type { DuelContext } from "@core/machines/duelMachine";
 const HEALTH_BAR_ABOVE_FEET_PX = 115;
 
 /**
- * Composes the visual elements of a one-vs-one duel encounter:
- * an arena background, the hero placeholder (left), the enemy placeholder
- * (right), and the enemy's PixiJS health bar above its head.
+ * Per-enemy rendering bundle — one per enemy in the encounter.
+ */
+interface EnemyBundle {
+  display: EnemyDisplay;
+  healthBar: HealthBar;
+}
+
+/**
+ * Composes the visual elements of a multi-enemy duel encounter:
+ * an arena background, the hero placeholder (left), and one display+health-bar
+ * pair for each enemy (right side, spaced apart).
+ *
+ * The active enemy (currently being fought) is rendered at full brightness;
+ * waiting enemies behind it are dimmed to signal they are not yet targetable.
  *
  * `update()` is called once per frame from the game loop.
  * DuelScene reads state; it never mutates it.
@@ -20,8 +31,7 @@ export class DuelScene {
   readonly container: Container;
   private readonly bg: Graphics;
   private readonly heroDisplay: HeroDisplay;
-  private readonly enemyDisplay: EnemyDisplay;
-  private readonly healthBar: HealthBar;
+  private readonly enemyBundles: EnemyBundle[];
 
   // Track last dimensions so the background rect only redraws on resize.
   private lastScreenWidth = 0;
@@ -41,11 +51,14 @@ export class DuelScene {
     this.heroDisplay = new HeroDisplay();
     this.container.addChild(this.heroDisplay.container);
 
-    this.enemyDisplay = new EnemyDisplay(context.enemyId);
-    this.container.addChild(this.enemyDisplay.container);
-
-    this.healthBar = new HealthBar();
-    this.container.addChild(this.healthBar.container);
+    // Create one display + health-bar bundle per enemy in the encounter.
+    this.enemyBundles = context.enemies.map((enemy) => {
+      const display = new EnemyDisplay(enemy.id);
+      const healthBar = new HealthBar();
+      this.container.addChild(display.container);
+      this.container.addChild(healthBar.container);
+      return { display, healthBar };
+    });
   }
 
   /**
@@ -66,9 +79,7 @@ export class DuelScene {
 
     const groundY = screenHeight * 0.8;
 
-    // Normalise the logical enemy X (design-space ~0–1920) to actual screen X.
     const scaleX = screenWidth / 1920;
-    const enemyScreenX = context.enemyX * scaleX;
 
     // Hero: pinned 25 % from the left, on the ground line.
     this.heroDisplay.container.x = screenWidth * 0.25;
@@ -76,20 +87,29 @@ export class DuelScene {
     // Map DuelHeroStance to the HeroDisplay placeholder states.
     this.heroDisplay.setStance(context.heroStance === "blocking" ? "ducking" : "running");
 
-    // Enemy: X from duel context (scales to screen); Y at ground line.
-    this.enemyDisplay.setPosition(enemyScreenX, groundY);
-    this.enemyDisplay.setPhase(stateToEnemyPhase(stateName));
-
-    // Health bar: centred above the enemy's head.
-    this.healthBar.container.x = enemyScreenX - HEALTH_BAR_WIDTH / 2;
-    this.healthBar.container.y = groundY - HEALTH_BAR_ABOVE_FEET_PX;
-    this.healthBar.update(context.enemyHp, context.enemyMaxHp);
+    // Each enemy: position from context, dim if not active or already defeated.
+    context.enemies.forEach((enemy, i) => {
+      const bundle = this.enemyBundles[i];
+      if (!bundle) return;
+      const isActive = i === context.activeEnemyIndex;
+      const enemyScreenX = enemy.x * scaleX;
+      bundle.display.setPosition(enemyScreenX, groundY);
+      bundle.display.setPhase(isActive ? stateToEnemyPhase(stateName) : "idle");
+      const isDefeated = enemy.hp <= 0;
+      bundle.display.container.alpha = isDefeated ? 0.3 : isActive ? 1 : 0.5;
+      bundle.healthBar.container.x = enemyScreenX - HEALTH_BAR_WIDTH / 2;
+      bundle.healthBar.container.y = groundY - HEALTH_BAR_ABOVE_FEET_PX;
+      bundle.healthBar.update(enemy.hp, enemy.maxHp);
+      bundle.healthBar.container.visible = !isDefeated;
+    });
   }
 
   destroy(): void {
     this.heroDisplay.destroy();
-    this.enemyDisplay.destroy();
-    this.healthBar.destroy();
+    this.enemyBundles.forEach(({ display, healthBar }) => {
+      display.destroy();
+      healthBar.destroy();
+    });
     this.container.destroy({ children: true });
   }
 }

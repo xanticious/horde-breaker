@@ -5,7 +5,9 @@ import { duelMachine } from "./duelMachine";
 import type { HeroId } from "@core/types/hero";
 import type { ChapterId } from "@core/types/chapter";
 import type { DerivedHeroStats } from "@core/types/hero";
-import type { EnemyEncounter } from "@core/types/enemy";
+import { EnemyId, type EnemyEncounter } from "@core/types/enemy";
+import { BARBARIAN_ENEMIES } from "@data/enemies/barbarian-enemies.data";
+import { SHIELDBEARER_BASE_ARMOR } from "@core/entities/enemies/shieldbearer";
 import type { RunResult } from "@core/types/run";
 import type { ObstacleInstance } from "@core/entities/obstacles/obstacleBase";
 import type { IEnemyBehavior } from "@core/entities/enemies/enemyBase";
@@ -279,7 +281,26 @@ export const runMachine = setup({
             // Should never happen — guard prevents entry when encounter is missing.
             throw new Error("[runMachine] duel entered with no current encounter");
           }
-          const behavior = context.enemyBehaviorFactory(encounter.enemyId);
+          const primaryDef = BARBARIAN_ENEMIES[encounter.enemyId];
+          const primaryArmorReduction =
+            encounter.enemyId === EnemyId.Shieldbearer ? SHIELDBEARER_BASE_ARMOR : 0;
+          const primaryEnemy = {
+            id: encounter.enemyId,
+            hp: primaryDef.baseHp,
+            damage: primaryDef.baseDamage,
+            behavior: context.enemyBehaviorFactory(encounter.enemyId),
+            baseArmorReduction: primaryArmorReduction,
+          };
+          const additionalEnemies = (encounter.additionalEnemyIds ?? []).map((id) => {
+            const def = BARBARIAN_ENEMIES[id];
+            return {
+              id,
+              hp: def.baseHp,
+              damage: def.baseDamage,
+              behavior: context.enemyBehaviorFactory(id),
+              baseArmorReduction: id === EnemyId.Shieldbearer ? SHIELDBEARER_BASE_ARMOR : 0,
+            };
+          });
           return {
             hero: {
               maxHp: context.currentHp,
@@ -289,14 +310,7 @@ export const runMachine = setup({
               attackSpeed: context.heroStats.attackSpeed,
               armor: context.heroStats.armor,
             },
-            enemy: {
-              id: encounter.enemyId,
-              // Enemy stats will be fetched properly in Sprint 14 — use a flat
-              // override that works for Sprint 11's wolf-only roster.
-              hp: 40,
-              damage: 8,
-              behavior,
-            },
+            enemies: [primaryEnemy, ...additionalEnemies],
             rng: context.rng,
           };
         },

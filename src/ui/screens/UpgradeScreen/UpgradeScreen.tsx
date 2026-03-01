@@ -5,7 +5,10 @@ import { ChapterId } from "@core/types/chapter";
 import { HeroId } from "@core/types/hero";
 import { BARBARIAN_HERO } from "@data/heroes/barbarian.data";
 import { BARBARIAN_CHAPTERS } from "@data/chapters/barbarian-chapters.data";
+import { EnemyId } from "@core/types/enemy";
 import { wolfBehavior } from "@core/entities/enemies/wolf";
+import { swordsmanBehavior } from "@core/entities/enemies/swordsman";
+import { shieldbearerBehavior } from "@core/entities/enemies/shieldbearer";
 import { generateLevel } from "@core/systems/levelGenerator";
 import { deriveHeroStats } from "@core/systems/progression";
 import { UpgradeGrid } from "./UpgradeGrid";
@@ -35,7 +38,16 @@ export function UpgradeScreen() {
       heroStats,
       enemyLayout: generateLevel(chapterDef, Date.now()),
       obstaclesBySegment: [],
-      enemyBehaviorFactory: () => wolfBehavior,
+      enemyBehaviorFactory: (enemyId: string) => {
+        switch (enemyId) {
+          case EnemyId.Swordsman:
+            return swordsmanBehavior;
+          case EnemyId.Shieldbearer:
+            return shieldbearerBehavior;
+          default:
+            return wolfBehavior;
+        }
+      },
       rngSeed: Date.now(),
     });
   }

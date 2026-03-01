@@ -51,8 +51,8 @@ export const wolfBehavior: IEnemyBehavior = {
       case "pounce":
         return WOLF_POUNCE_WINDUP_MS;
       case "retreat":
-        return 0;
       case "wait":
+      default:
         return 0;
     }
   },
@@ -64,6 +64,7 @@ export const wolfBehavior: IEnemyBehavior = {
       case "retreat":
         return WOLF_RETREAT_RECOVERY_MS;
       case "wait":
+      default:
         return 0;
     }
   },

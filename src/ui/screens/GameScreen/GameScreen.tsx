@@ -7,6 +7,8 @@ import { EnemyId } from "@core/types/enemy";
 import { Button } from "@ui/components/Button/Button";
 import { HUD } from "@ui/components/HUD/HUD";
 import { wolfBehavior } from "@core/entities/enemies/wolf";
+import { swordsmanBehavior } from "@core/entities/enemies/swordsman";
+import { shieldbearerBehavior } from "@core/entities/enemies/shieldbearer";
 import { GameRenderer } from "@rendering/GameRenderer";
 import { InputManager } from "@input/InputManager";
 import { GameAction } from "@input/types";
@@ -210,6 +212,8 @@ export function GameScreen() {
 void BARBARIAN_ENEMIES;
 void EnemyId;
 void wolfBehavior;
+void swordsmanBehavior;
+void shieldbearerBehavior;
 void generateLevel;
 void deriveHeroStats;
 void BARBARIAN_CHAPTERS;

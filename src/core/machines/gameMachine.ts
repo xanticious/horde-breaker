@@ -3,7 +3,7 @@ import type { HeroId } from "@core/types/hero";
 import { ChapterId } from "@core/types/chapter";
 import type { RunResult } from "@core/types/run";
 import type { DerivedHeroStats } from "@core/types/hero";
-import type { EnemyEncounter } from "@core/types/enemy";
+import { EnemyId, type EnemyEncounter } from "@core/types/enemy";
 import type { ObstacleInstance } from "@core/entities/obstacles/obstacleBase";
 import type { IEnemyBehavior } from "@core/entities/enemies/enemyBase";
 import type { SaveData, HeroSaveData } from "@core/types/save";
@@ -13,6 +13,8 @@ import type { RunInput } from "./runMachine";
 import { BARBARIAN_HERO } from "@data/heroes/barbarian.data";
 import { BARBARIAN_CHAPTERS } from "@data/chapters/barbarian-chapters.data";
 import { wolfBehavior } from "@core/entities/enemies/wolf";
+import { swordsmanBehavior } from "@core/entities/enemies/swordsman";
+import { shieldbearerBehavior } from "@core/entities/enemies/shieldbearer";
 import { generateLevel } from "@core/systems/levelGenerator";
 import {
   calculateRunReward,
@@ -227,7 +229,16 @@ export const gameMachine = setup({
               },
               enemyLayout: generateLevel(BARBARIAN_CHAPTERS[ChapterId.Chapter1], Date.now()),
               obstaclesBySegment: [],
-              enemyBehaviorFactory: () => wolfBehavior,
+              enemyBehaviorFactory: (enemyId: string): IEnemyBehavior => {
+                switch (enemyId) {
+                  case EnemyId.Swordsman:
+                    return swordsmanBehavior;
+                  case EnemyId.Shieldbearer:
+                    return shieldbearerBehavior;
+                  default:
+                    return wolfBehavior;
+                }
+              },
             };
           }
           return {

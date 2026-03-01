@@ -185,14 +185,70 @@ describe("GameRenderer", () => {
   });
 
   it("setMode('duel') with context does not throw before init", () => {
-    const mockCtx = { enemyId: "wolf", enemyHp: 40, enemyMaxHp: 40 };
+    const mockCtx = {
+      enemies: [
+        {
+          id: "wolf",
+          hp: 40,
+          maxHp: 40,
+          damage: 8,
+          x: 620,
+          behavior: {
+            decideAction: () => ({ type: "wait" as const }),
+            getWindUpDuration: () => 0,
+            getRecoveryDuration: () => 0,
+          },
+          currentAction: { type: "wait" as const },
+          currentArmorReduction: 0,
+          baseArmorReduction: 0,
+        },
+      ],
+      activeEnemyIndex: 0,
+      totalDamageDealt: 0,
+      heroHp: 100,
+      heroMaxHp: 100,
+      heroDamage: 10,
+      heroArmor: 0,
+      heroAttackSpeed: 1,
+      heroX: 300,
+      heroStance: "neutral" as const,
+      rng: Math.random,
+    };
     expect(() =>
       renderer.setMode("duel", mockCtx as Parameters<typeof renderer.setMode>[1]),
     ).not.toThrow();
   });
 
   it("setDuelContext() does not throw", () => {
-    const mockCtx = { enemyId: "wolf", enemyHp: 40, enemyMaxHp: 40 };
+    const mockCtx = {
+      enemies: [
+        {
+          id: "wolf",
+          hp: 40,
+          maxHp: 40,
+          damage: 8,
+          x: 620,
+          behavior: {
+            decideAction: () => ({ type: "wait" as const }),
+            getWindUpDuration: () => 0,
+            getRecoveryDuration: () => 0,
+          },
+          currentAction: { type: "wait" as const },
+          currentArmorReduction: 0,
+          baseArmorReduction: 0,
+        },
+      ],
+      activeEnemyIndex: 0,
+      totalDamageDealt: 0,
+      heroHp: 100,
+      heroMaxHp: 100,
+      heroDamage: 10,
+      heroArmor: 0,
+      heroAttackSpeed: 1,
+      heroX: 300,
+      heroStance: "neutral" as const,
+      rng: Math.random,
+    };
     expect(() =>
       renderer.setDuelContext(mockCtx as Parameters<typeof renderer.setDuelContext>[0], "idle"),
     ).not.toThrow();

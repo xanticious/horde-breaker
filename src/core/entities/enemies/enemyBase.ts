@@ -5,8 +5,20 @@ import type { DuelState } from "@core/types/combat";
 /**
  * The set of actions an enemy AI can decide to take during a duel.
  * Terminal `wait` means "do nothing this tick".
+ *
+ * - `pounce`    — Wolf lunging attack.
+ * - `slash`     — Swordsman sword swing (long-range timing attack).
+ * - `shieldBash`— Shieldbearer bashing attack; the shieldbearer's
+ *                  shield drops during recovery, giving an opening.
+ * - `retreat`   — Non-damaging reposition.
+ * - `wait`      — Stand still; no action this cycle.
  */
-export type EnemyAction = { type: "wait" } | { type: "pounce" } | { type: "retreat" };
+export type EnemyAction =
+  | { type: "wait" }
+  | { type: "pounce" }
+  | { type: "slash" }
+  | { type: "shieldBash" }
+  | { type: "retreat" };
 
 // ── Strategy interface ────────────────────────────────────────────────────────
 

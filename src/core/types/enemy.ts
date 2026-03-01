@@ -54,4 +54,9 @@ export interface EnemyEncounter {
   /** 0–100: position along the chapter's total traversal distance. */
   positionPercent: number;
   isBoss: boolean;
+  /**
+   * Additional enemies that appear alongside the primary enemy in this encounter.
+   * When present, the DuelMachine receives multiple enemies (front-to-back).
+   */
+  additionalEnemyIds?: readonly EnemyId[];
 }

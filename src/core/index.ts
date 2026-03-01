@@ -19,3 +19,5 @@ export type { ObstacleType, ObstacleInstance } from "./entities/obstacles/obstac
 export { OBSTACLE_COLLISION_RADIUS } from "./entities/obstacles/obstacleBase";
 export type { IEnemyBehavior, EnemyAction } from "./entities/enemies/enemyBase";
 export { wolfBehavior } from "./entities/enemies/wolf";
+export { swordsmanBehavior } from "./entities/enemies/swordsman";
+export { shieldbearerBehavior, SHIELDBEARER_BASE_ARMOR } from "./entities/enemies/shieldbearer";

@@ -586,21 +586,21 @@
 
 ### Tasks
 
-- [ ] **14.1** — Create Swordsman behavior (`src/core/entities/enemies/swordsman.ts`) + test:
+- [x] **14.1** — Create Swordsman behavior (`src/core/entities/enemies/swordsman.ts`) + test:
   - Long range, punishes forward movement, knockback on hit.
   - Baitable: swings when hero approaches, recoverable window after.
-- [ ] **14.2** — Create Shieldbearer behavior (`src/core/entities/enemies/shieldbearer.ts`) + test:
+- [x] **14.2** — Create Shieldbearer behavior (`src/core/entities/enemies/shieldbearer.ts`) + test:
   - Reduced damage while shield is up.
   - Shield bash → stun → attack pattern.
-- [ ] **14.3** — Update `DuelMachine` to support multiple simultaneous enemies:
+- [x] **14.3** — Update `DuelMachine` to support multiple simultaneous enemies:
   - Each enemy tracked independently.
   - Front enemy is the primary target; back enemies can still act (ranged attacks, etc.).
   - Defeating front enemy makes the next enemy the primary target.
-- [ ] **14.4** — Update `DuelScene` for multi-enemy rendering:
+- [x] **14.4** — Update `DuelScene` for multi-enemy rendering:
   - Enemies at different X positions, clear spatial separation.
-- [ ] **14.5** — Update `levelGenerator` to place Swordsman and Shieldbearer encounters in Chapter 1.
-- [ ] **14.6** — Write integration tests for multi-enemy duels.
-- [ ] **14.7** — All scripts pass.
+- [x] **14.5** — Update `levelGenerator` to place Swordsman and Shieldbearer encounters in Chapter 1.
+- [x] **14.6** — Write integration tests for multi-enemy duels.
+- [x] **14.7** — All scripts pass.
 
 ### Acceptance Criteria
 

@@ -14,8 +14,14 @@ const log = Logger.create("duel");
 /** Default hero X position in the duel arena at design resolution. */
 const DEFAULT_HERO_X = 300;
 
-/** Default enemy X position in the duel arena at design resolution. */
+/** Default X position for the first (front) enemy in the duel arena. */
 const DEFAULT_ENEMY_X = 620;
+
+/**
+ * Pixel spacing between consecutive enemies when multiple are present.
+ * Enemies line up left-to-right — front enemy is closest to the hero.
+ */
+const ENEMY_SPACING = 200;
 
 /** Hero lock-out duration (ms) after an attack resolves. */
 const HERO_RECOVERY_MS = 300;
@@ -27,13 +33,46 @@ const HERO_RECOVERY_MS = 300;
 const ENEMY_THINK_MS = 1200;
 
 /**
- * For Sprint 10 the block timing model is simplified:
- * any block pressed during the enemy's wind-up counts as a "regular" block
- * (not a perfect block). REGULAR_BLOCK_TIMING_MS intentionally exceeds
+ * Block timing model: any block pressed during the enemy's wind-up counts as
+ * a "regular" block (not a perfect block). REGULAR_BLOCK_TIMING_MS exceeds
  * PERFECT_BLOCK_WINDOW_MS so calculateBlockResult returns a normal block.
  */
 const PERFECT_BLOCK_WINDOW_MS = 200;
 const REGULAR_BLOCK_TIMING_MS = PERFECT_BLOCK_WINDOW_MS + 1;
+
+/**
+ * Action types that deal damage to the hero when they resolve.
+ * Non-damaging actions (wait, retreat) skip damage calculation.
+ */
+const DAMAGING_ACTIONS = new Set<string>(["pounce", "slash", "shieldBash"]);
+
+// ── Per-enemy runtime state ───────────────────────────────────────────────────
+
+/**
+ * Runtime state for a single enemy in a multi-enemy encounter.
+ * Each enemy tracks its own HP, position, behavior, and shield state.
+ */
+export interface DuelEnemyState {
+  id: EnemyId;
+  hp: number;
+  maxHp: number;
+  damage: number;
+  /** X position in design-space pixels (1920-wide reference frame). */
+  x: number;
+  behavior: IEnemyBehavior;
+  /** Action the enemy is currently committed to (set on each AI decision). */
+  currentAction: EnemyAction;
+  /**
+   * Current armor reduction applied to hero attacks landing on this enemy.
+   * Normally equals `baseArmorReduction`; zeroed during recovery (shield down).
+   */
+  currentArmorReduction: number;
+  /**
+   * Baseline armor restored when this enemy returns to idle.
+   * Shielded enemies like the Shieldbearer pass > 0 here.
+   */
+  baseArmorReduction: number;
+}
 
 // ── Input / context types ─────────────────────────────────────────────────────
 
@@ -52,15 +91,25 @@ export interface DuelEnemyInput {
   hp: number;
   damage: number;
   behavior: IEnemyBehavior;
+  /** Optional X position override. Defaults to DEFAULT_ENEMY_X + index * ENEMY_SPACING. */
+  x?: number;
+  /**
+   * Passive armor reduction while the enemy's shield is up (0–1).
+   * Only relevant for shielded enemies such as the Shieldbearer. Defaults to 0.
+   */
+  baseArmorReduction?: number;
 }
 
 export interface DuelInput {
   hero: DuelHeroInput;
-  enemy: DuelEnemyInput;
+  /**
+   * Ordered list of enemies in this encounter (front-to-back).
+   * The hero always targets enemies[activeEnemyIndex].
+   * The front enemy (index 0) must be defeated before index 1 becomes active.
+   */
+  enemies: DuelEnemyInput[];
   /** Override the hero's starting X coordinate (defaults to DEFAULT_HERO_X). */
   heroX?: number;
-  /** Override the enemy's starting X coordinate (defaults to DEFAULT_ENEMY_X). */
-  enemyX?: number;
   /**
    * Seeded PRNG for deterministic enemy AI decisions.
    * Defaults to Math.random when omitted — pass a seeded RNG for reproducible runs.
@@ -79,13 +128,12 @@ export interface DuelContext {
   heroAttackSpeed: number;
   heroX: number;
   heroStance: DuelHeroStance;
-  enemyId: EnemyId;
-  enemyHp: number;
-  enemyMaxHp: number;
-  enemyDamage: number;
-  enemyX: number;
-  enemyBehavior: IEnemyBehavior;
-  currentEnemyAction: EnemyAction;
+  /** All enemies in this encounter, ordered front-to-back. */
+  enemies: DuelEnemyState[];
+  /** Index of the enemy currently being fought. Advances when an enemy is defeated. */
+  activeEnemyIndex: number;
+  /** Cumulative damage dealt by the hero across all defeated enemies. */
+  totalDamageDealt: number;
   rng: () => number;
 }
 
@@ -103,37 +151,61 @@ export type DuelEvent =
 // ── Emitted events (for parent actors) ────────────────────────────────────────
 
 export type DuelEmitted =
-  /** Fired once when the enemy's HP reaches zero. */
+  /** Fired once when all enemies' HP reaches zero. */
   | { type: "DUEL_WON"; damageDealt: number }
   /** Fired once when the hero's HP reaches zero. */
   | { type: "DUEL_LOST" };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/** Shorthand accessor for the currently active enemy in the context. */
+function activeEnemy(context: DuelContext): DuelEnemyState {
+  // activeEnemyIndex is always valid when used during active combat states.
+  return context.enemies[context.activeEnemyIndex]!;
+}
+
 function makeDuelSnapshot(context: DuelContext, phase: DuelState["phase"]): DuelState {
+  const enemy = activeEnemy(context);
   return {
     heroX: context.heroX,
-    enemyX: context.enemyX,
+    enemyX: enemy.x,
     heroHp: context.heroHp,
     maxHeroHp: context.heroMaxHp,
-    enemyHp: context.enemyHp,
-    maxEnemyHp: context.enemyMaxHp,
+    enemyHp: enemy.hp,
+    maxEnemyHp: enemy.maxHp,
     phase,
   };
+}
+
+/** Produce an updated `enemies` array with one element replaced. */
+function replaceEnemy(
+  enemies: DuelEnemyState[],
+  index: number,
+  next: DuelEnemyState,
+): DuelEnemyState[] {
+  const arr = [...enemies];
+  arr[index] = next;
+  return arr;
 }
 
 // ── Machine ───────────────────────────────────────────────────────────────────
 
 /**
- * One-vs-one combat encounter between the hero and a single enemy.
+ * Combat encounter between the hero and one or more enemies (front-to-back).
  *
- * Combat is commitment-based: once ATTACK is sent the hero is locked into the
- * heroWindingUp state and cannot act again until the attack resolves and the
- * heroRecovery timer expires.
+ * Multi-enemy flow:
+ *   - Hero always targets `enemies[activeEnemyIndex]`.
+ *   - When that enemy's HP reaches 0, `activeEnemyIndex` advances.
+ *   - When all enemies are defeated (index ≥ enemies.length) → `enemyDefeated`.
  *
- * The enemy AI is queried via the IEnemyBehavior strategy each ENEMY_THINK_MS
- * interval. Damage resolution, blocking, and HP tracking all use the pure
- * combat/health system functions so they stay independently testable.
+ * Shield mechanic:
+ *   - Enemies with `baseArmorReduction > 0` (e.g. Shieldbearer) resist hero
+ *     attacks while their `currentArmorReduction` is positive.
+ *   - `currentArmorReduction` is zeroed on entering `enemyRecovery` (shield
+ *     drops after any attack) and restored to `baseArmorReduction` on re-entry
+ *     to `idle` — giving the player a clear punish window after each enemy attack.
+ *
+ * Combat is commitment-based: input is ignored while hero or enemy is mid-action.
  */
 export const duelMachine = setup({
   types: {
@@ -149,11 +221,15 @@ export const duelMachine = setup({
     /** Brief hero lock-out after attack resolves — prevents spam attacks. */
     HERO_RECOVERY: HERO_RECOVERY_MS,
     /** Enemy wind-up duration is determined by the behavior strategy. */
-    ENEMY_WINDUP: ({ context }: { context: DuelContext }) =>
-      context.enemyBehavior.getWindUpDuration(context.currentEnemyAction),
+    ENEMY_WINDUP: ({ context }: { context: DuelContext }) => {
+      const enemy = context.enemies[context.activeEnemyIndex];
+      return enemy ? enemy.behavior.getWindUpDuration(enemy.currentAction) : 0;
+    },
     /** Enemy recovery duration is determined by the behavior strategy. */
-    ENEMY_RECOVERY: ({ context }: { context: DuelContext }) =>
-      context.enemyBehavior.getRecoveryDuration(context.currentEnemyAction),
+    ENEMY_RECOVERY: ({ context }: { context: DuelContext }) => {
+      const enemy = context.enemies[context.activeEnemyIndex];
+      return enemy ? enemy.behavior.getRecoveryDuration(enemy.currentAction) : 0;
+    },
     /** Gap between enemy action decisions when neither side is acting. */
     ENEMY_THINK: ENEMY_THINK_MS,
   },
@@ -161,68 +237,128 @@ export const duelMachine = setup({
     enterBlockingStance: assign({ heroStance: "blocking" as DuelHeroStance }),
     exitBlockingStance: assign({ heroStance: "neutral" as DuelHeroStance }),
 
-    decideEnemyAction: assign(({ context }) => ({
-      currentEnemyAction: context.enemyBehavior.decideAction(
-        makeDuelSnapshot(context, "idle"),
-        context.rng,
-      ),
-    })),
+    decideEnemyAction: assign(({ context }) => {
+      const enemy = context.enemies[context.activeEnemyIndex];
+      if (!enemy) return {};
+      const action = enemy.behavior.decideAction(makeDuelSnapshot(context, "idle"), context.rng);
+      return {
+        enemies: replaceEnemy(context.enemies, context.activeEnemyIndex, {
+          ...enemy,
+          currentAction: action,
+        }),
+      };
+    }),
 
     resolveHeroAttack: assign(({ context }) => {
+      const enemy = context.enemies[context.activeEnemyIndex];
+      if (!enemy) return {};
+
       const damage = calculateDamage({
         baseDamage: context.heroDamage,
         damageMultiplier: 1,
         stanceMultiplier: 1,
-        // Enemy has no armour in the initial roster (Sprint 10–13).
-        armorReduction: 0,
+        // Use the active enemy's current armor (0 when shield is down).
+        armorReduction: enemy.currentArmorReduction,
         criticalHit: false,
       });
-      const newHp = applyDamage(context.enemyHp, damage, context.enemyMaxHp);
-      log.debug(`Hero attack resolves: ${damage} dmg → enemy ${context.enemyHp}→${newHp} HP`);
-      return { enemyHp: newHp };
+      const newHp = applyDamage(enemy.hp, damage, enemy.maxHp);
+      log.debug(
+        `Hero attack → enemy[${context.activeEnemyIndex}] ${enemy.hp}→${newHp} HP (${damage} dmg)`,
+      );
+
+      const updatedEnemies = replaceEnemy(context.enemies, context.activeEnemyIndex, {
+        ...enemy,
+        hp: newHp,
+      });
+
+      // Advance to the next enemy immediately if this one was just killed, so
+      // the allEnemiesDefeated guard checks the correct state in heroRecovery.
+      let newIndex = context.activeEnemyIndex;
+      if (!isAlive(newHp) && context.activeEnemyIndex + 1 < context.enemies.length) {
+        newIndex = context.activeEnemyIndex + 1;
+        log.debug(`Enemy[${context.activeEnemyIndex}] defeated — advancing to enemy[${newIndex}]`);
+      }
+
+      return {
+        enemies: updatedEnemies,
+        activeEnemyIndex: newIndex,
+        totalDamageDealt: context.totalDamageDealt + damage,
+      };
     }),
 
     resolveEnemyAttack: assign(({ context }) => {
-      // Non-attacking actions (wait, retreat) deal no damage.
-      if (context.currentEnemyAction.type !== "pounce") {
+      const enemy = context.enemies[context.activeEnemyIndex];
+      if (!enemy) return {};
+
+      // Non-damaging actions skip damage resolution entirely.
+      if (!DAMAGING_ACTIONS.has(enemy.currentAction.type)) {
         return {};
       }
 
       let damage: number;
       if (context.heroStance === "blocking") {
-        // Any block pressed during wind-up counts as a regular block for Sprint 10.
+        // Any block pressed during wind-up counts as a regular block.
         const result = calculateBlockResult(
-          context.enemyDamage,
+          enemy.damage,
           REGULAR_BLOCK_TIMING_MS,
           PERFECT_BLOCK_WINDOW_MS,
         );
         damage = result.damage;
-        log.debug(`Hero blocked pounce: ${context.enemyDamage}→${damage} dmg`);
+        log.debug(`Hero blocked ${enemy.currentAction.type}: ${enemy.damage}→${damage} dmg`);
       } else {
         damage = calculateDamage({
-          baseDamage: context.enemyDamage,
+          baseDamage: enemy.damage,
           damageMultiplier: 1,
           stanceMultiplier: 1,
           armorReduction: context.heroArmor,
           criticalHit: false,
         });
-        log.debug(`Hero takes pounce hit: ${damage} dmg`);
+        log.debug(`Hero takes ${enemy.currentAction.type} hit: ${damage} dmg`);
       }
 
       const newHp = applyDamage(context.heroHp, damage, context.heroMaxHp);
       return { heroHp: newHp };
     }),
 
+    /**
+     * Zero the active enemy's armor on entering recovery — the shield is down
+     * during the post-attack vulnerable window.
+     */
+    setEnemyVulnerable: assign(({ context }) => {
+      const enemy = context.enemies[context.activeEnemyIndex];
+      if (!enemy || enemy.baseArmorReduction === 0) return {};
+      return {
+        enemies: replaceEnemy(context.enemies, context.activeEnemyIndex, {
+          ...enemy,
+          currentArmorReduction: 0,
+        }),
+      };
+    }),
+
+    /**
+     * Restore the active enemy's armor on returning to idle — shield goes back up.
+     */
+    restoreEnemyArmor: assign(({ context }) => {
+      const enemy = context.enemies[context.activeEnemyIndex];
+      if (!enemy || enemy.currentArmorReduction === enemy.baseArmorReduction) return {};
+      return {
+        enemies: replaceEnemy(context.enemies, context.activeEnemyIndex, {
+          ...enemy,
+          currentArmorReduction: enemy.baseArmorReduction,
+        }),
+      };
+    }),
+
     emitDuelWon: emit(({ context }: { context: DuelContext }) => ({
       type: "DUEL_WON" as const,
-      // Total damage the hero dealt equals enemy max HP minus remaining HP.
-      damageDealt: context.enemyMaxHp - context.enemyHp,
+      damageDealt: context.totalDamageDealt,
     })),
 
     emitDuelLost: emit({ type: "DUEL_LOST" as const }),
   },
   guards: {
-    enemyDead: ({ context }) => !isAlive(context.enemyHp),
+    /** True when all enemies in the encounter have been defeated. */
+    allEnemiesDefeated: ({ context }) => context.enemies.every((e) => !isAlive(e.hp)),
     heroDead: ({ context }) => !isAlive(context.heroHp),
   },
 }).createMachine({
@@ -236,18 +372,24 @@ export const duelMachine = setup({
     heroAttackSpeed: input.hero.attackSpeed,
     heroX: input.heroX ?? DEFAULT_HERO_X,
     heroStance: "neutral",
-    enemyId: input.enemy.id,
-    enemyHp: input.enemy.hp,
-    enemyMaxHp: input.enemy.hp,
-    enemyDamage: input.enemy.damage,
-    enemyX: input.enemyX ?? DEFAULT_ENEMY_X,
-    enemyBehavior: input.enemy.behavior,
-    currentEnemyAction: { type: "wait" },
+    enemies: input.enemies.map((e, i) => ({
+      id: e.id,
+      hp: e.hp,
+      maxHp: e.hp,
+      damage: e.damage,
+      x: e.x ?? DEFAULT_ENEMY_X + i * ENEMY_SPACING,
+      behavior: e.behavior,
+      currentAction: { type: "wait" } as EnemyAction,
+      currentArmorReduction: e.baseArmorReduction ?? 0,
+      baseArmorReduction: e.baseArmorReduction ?? 0,
+    })),
+    activeEnemyIndex: 0,
+    totalDamageDealt: 0,
     rng: input.rng ?? Math.random,
   }),
   states: {
     idle: {
-      entry: () => log.debug("idle"),
+      entry: ["restoreEnemyArmor", () => log.debug("idle")],
       on: {
         ATTACK: {
           // Committing to swing — clear any blocking stance beforehand.
@@ -265,8 +407,10 @@ export const duelMachine = setup({
           actions: assign({ heroX: ({ context }) => Math.max(0, context.heroX - 80) }),
         },
         MOVE_RIGHT: {
-          actions: assign({
-            heroX: ({ context }) => Math.min(context.enemyX - 100, context.heroX + 80),
+          actions: assign(({ context }) => {
+            const enemy = context.enemies[context.activeEnemyIndex];
+            const cap = enemy ? enemy.x - 100 : context.heroX;
+            return { heroX: Math.min(cap, context.heroX + 80) };
           }),
         },
       },
@@ -292,10 +436,10 @@ export const duelMachine = setup({
 
     heroRecovery: {
       entry: () => log.debug("heroRecovery"),
-      // Check immediately on entry whether the attack finished the enemy.
+      // Check on entry whether all enemies are now defeated.
       always: [
         {
-          guard: "enemyDead",
+          guard: "allEnemiesDefeated",
           actions: "emitDuelWon",
           target: "enemyDefeated",
         },
@@ -323,7 +467,8 @@ export const duelMachine = setup({
     },
 
     enemyRecovery: {
-      entry: () => log.debug("enemyRecovery"),
+      // Shield drops on entering recovery — zero armor until enemy returns to idle.
+      entry: ["setEnemyVulnerable", () => log.debug("enemyRecovery")],
       // Check immediately on entry whether the attack killed the hero.
       always: [
         {

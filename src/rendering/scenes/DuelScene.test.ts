@@ -57,17 +57,25 @@ function makeContext(overrides: Partial<DuelContext> = {}): DuelContext {
     heroAttackSpeed: 1,
     heroX: 300,
     heroStance: "neutral",
-    enemyId: EnemyId.Wolf,
-    enemyHp: 40,
-    enemyMaxHp: 40,
-    enemyDamage: 8,
-    enemyX: 620,
-    enemyBehavior: {
-      decideAction: vi.fn(),
-      getWindUpDuration: vi.fn(),
-      getRecoveryDuration: vi.fn(),
-    },
-    currentEnemyAction: { type: "wait" },
+    enemies: [
+      {
+        id: EnemyId.Wolf,
+        hp: 40,
+        maxHp: 40,
+        damage: 8,
+        x: 620,
+        behavior: {
+          decideAction: vi.fn(),
+          getWindUpDuration: vi.fn(),
+          getRecoveryDuration: vi.fn(),
+        },
+        currentAction: { type: "wait" },
+        currentArmorReduction: 0,
+        baseArmorReduction: 0,
+      },
+    ],
+    activeEnemyIndex: 0,
+    totalDamageDealt: 0,
     rng: Math.random,
     ...overrides,
   };
@@ -98,9 +106,9 @@ describe("DuelScene", () => {
   });
 
   it("update() does not throw in enemyDefeated state", () => {
-    expect(() =>
-      scene.update(makeContext({ enemyHp: 0 }), "enemyDefeated", 1920, 1080),
-    ).not.toThrow();
+    const ctx = makeContext();
+    ctx.enemies[0]!.hp = 0;
+    expect(() => scene.update(ctx, "enemyDefeated", 1920, 1080)).not.toThrow();
   });
 
   it("update() handles blocking hero stance", () => {
