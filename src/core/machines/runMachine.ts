@@ -11,6 +11,7 @@ import type { ObstacleInstance } from "@core/entities/obstacles/obstacleBase";
 import type { IEnemyBehavior } from "@core/entities/enemies/enemyBase";
 import { isTimerExpired } from "@core/systems/timer";
 import { isAlive, applyPostDuelHeal } from "@core/systems/health";
+import { calculateRunReward } from "@core/systems/economy";
 import { POST_DUEL_HEAL_PERCENT, MAX_RUN_DURATION_MS } from "@data/balance.data";
 import { createSeededRng } from "@utils/random";
 
@@ -105,10 +106,14 @@ function encounterReached(context: RunContext): boolean {
 
 /** Build a RunResult from the current context for machine output. */
 function buildRunResult(context: RunContext): RunResult {
-  return {
+  // Compute a partial result first (currencyEarned = 0) so we can pass it to
+  // calculateRunReward, then set the final total. The GameMachine will call
+  // calculateRunReward again to get the breakdown for the results screen, but
+  // having currencyEarned set here ensures the output is self-consistent.
+  const partial: RunResult = {
     heroId: context.heroId,
     chapter: context.chapter,
-    currencyEarned: 0, // Computed in Sprint 12 via economy system
+    currencyEarned: 0,
     distancePercent: Math.min(100, context.distanceTravelled),
     distanceReached: Math.min(100, context.distanceTravelled),
     enemiesDefeated: context.enemiesDefeated,
@@ -117,6 +122,7 @@ function buildRunResult(context: RunContext): RunResult {
     coinsCollected: [],
     completed: allEncountersCleared(context),
   };
+  return { ...partial, currencyEarned: calculateRunReward(partial).total };
 }
 
 // ── Machine ───────────────────────────────────────────────────────────────────

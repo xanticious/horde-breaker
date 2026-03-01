@@ -527,18 +527,18 @@
 
 ### Tasks
 
-- [ ] **12.1** — Update `ResultsScreen.tsx`:
+- [x] **12.1** — Update `ResultsScreen.tsx`:
   - Display: distance %, enemies defeated, duel damage, boss defeated, coins collected.
   - Display: reward breakdown (distance reward, kill reward, damage reward, boss reward, coin reward, total).
   - Different headers for death / timeout / victory.
   - Lore message from the enemy (reads from lore data).
-- [ ] **12.2** — Create `ResultsScreen.module.css` — styled layout.
-- [ ] **12.3** — Wire economy system: `GameMachine` calls `calculateRunReward()` when run completes, stores result in context.
-- [ ] **12.4** — Update `SaveData` context in `GameMachine`: add earned currency to `heroes[heroId].currency`.
-- [ ] **12.5** — Write `ResultsScreen.test.tsx`:
+- [x] **12.2** — Create `ResultsScreen.module.css` — styled layout.
+- [x] **12.3** — Wire economy system: `GameMachine` calls `calculateRunReward()` when run completes, stores result in context.
+- [x] **12.4** — Update `SaveData` context in `GameMachine`: add earned currency to `heroes[heroId].currency`.
+- [x] **12.5** — Write `ResultsScreen.test.tsx`:
   - Renders correct values for a mock run result.
   - Shows death vs victory header correctly.
-- [ ] **12.6** — All scripts pass.
+- [x] **12.6** — All scripts pass.
 
 ### Acceptance Criteria
 

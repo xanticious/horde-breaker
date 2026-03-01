@@ -142,12 +142,31 @@ describe("gameMachine", () => {
 
       const snapshot = actor.getSnapshot();
       expect(snapshot.value).toBe("results");
-      expect(snapshot.context.lastRunResult).toEqual(MOCK_RUN_RESULT);
+      // currencyEarned is overwritten by calculateRunReward — the stored result
+      // matches on all fields except the computed currency amount.
+      const stored = snapshot.context.lastRunResult;
+      expect(stored).not.toBeNull();
+      expect(stored?.heroId).toBe(MOCK_RUN_RESULT.heroId);
+      expect(stored?.distancePercent).toBe(MOCK_RUN_RESULT.distancePercent);
+      expect(stored?.enemiesDefeated).toBe(MOCK_RUN_RESULT.enemiesDefeated);
+      expect(stored?.duelDamageDealt).toBe(MOCK_RUN_RESULT.duelDamageDealt);
+      // The economy system computes the actual earned amount (350 for this mock).
+      expect(stored?.currencyEarned).toBeGreaterThan(0);
     });
 
     it("ignores irrelevant events in run", () => {
       actor.send({ type: "START_GAME" });
       expect(actor.getSnapshot().value).toBe("run");
+    });
+
+    it("adds earned currency to saveData on END_RUN", () => {
+      actor.send({ type: "END_RUN", result: MOCK_RUN_RESULT });
+
+      const snapshot = actor.getSnapshot();
+      const heroSave = snapshot.context.saveData.heroes[HeroId.Barbarian];
+      expect(heroSave).toBeDefined();
+      // Economy: 80% dist (80) + 3 kills × 50 (150) + 120 dmg (120) = 350
+      expect(heroSave?.currency).toBe(350);
     });
   });
 

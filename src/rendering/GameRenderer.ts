@@ -27,6 +27,15 @@ export class GameRenderer {
   // init path can detect the stale state and clean up the Application itself.
   private _destroyed = false;
 
+  // Resolves once this instance is fully destroyed (GPU resources freed).
+  // Used by GameScreen to serialise React StrictMode double-mount: the second
+  // init waits on this promise so the two Application.init() calls never
+  // overlap and compete for GPU memory.
+  private _resolveDestroyed!: () => void;
+  readonly whenDestroyed: Promise<void> = new Promise<void>(
+    (res) => (this._resolveDestroyed = res),
+  );
+
   // Standalone traversal context used until RunMachine (Sprint 11) takes over.
   // Drives the parallax scroll and hero placeholder animation.
   private _traversalContext: TraversalContext = {
@@ -101,6 +110,9 @@ export class GameRenderer {
   /**
    * Async init required by PixiJS 8 — Application.init() must be awaited.
    * Appends the canvas to the provided parent element after init completes.
+   *
+   * Attempts WebGL first; falls back to canvas renderer if the WebGL context
+   * is unavailable or lost (e.g. GPU OOM during React StrictMode double-mount).
    */
   async init(canvasParent: HTMLElement): Promise<void> {
     // Hold in a local variable until init() fully resolves. If destroy() is
@@ -110,22 +122,46 @@ export class GameRenderer {
     // partially-initialised Application that lacks _cancelResize, crashing.
     const app = new Application();
 
-    await app.init({
+    const baseOptions = {
       backgroundColor: 0x1a1a2e,
       antialias: true,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
       resizeTo: canvasParent,
-    });
+    };
+
+    try {
+      await app.init({ ...baseOptions, preferWebGLVersion: 2 });
+    } catch {
+      // WebGL context unavailable or lost (e.g. GPU OOM from concurrent init
+      // during React StrictMode double-mount). Fall back to canvas renderer so
+      // the game remains functional in degraded mode.
+      console.warn("[GameRenderer] WebGL init failed — falling back to canvas renderer.");
+      try {
+        await app.init({ ...baseOptions, preference: "webgpu" });
+      } catch {
+        await app.init({ ...baseOptions, preference: "canvas" });
+      }
+    }
 
     // If the component unmounted while we were awaiting, clean up immediately
     // and bail — the GameScreen cleanup callback already set this.app to null.
     if (this._destroyed) {
       app.destroy(true, { children: true });
+      this._resolveDestroyed();
       return;
     }
 
     this.app = app;
+
+    // Recover gracefully if the GPU context is lost after init (e.g. device
+    // reset, driver crash). Log the event; the game loop will stall harmlessly
+    // until the user refreshes.
+    this.app.canvas.addEventListener("webglcontextlost", (e) => {
+      e.preventDefault();
+      console.warn("[GameRenderer] WebGL context lost — rendering paused.");
+    });
+
     canvasParent.appendChild(this.app.canvas);
 
     // Sprint 7: TraversalScene replaces the Sprint 6 proof-of-life placeholder.
@@ -235,5 +271,7 @@ export class GameRenderer {
     // true = remove canvas from DOM; true = destroy children, textures, context
     this.app.destroy(true, true);
     this.app = null;
+
+    this._resolveDestroyed();
   }
 }

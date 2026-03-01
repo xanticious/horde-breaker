@@ -6,12 +6,15 @@ import type { DerivedHeroStats } from "@core/types/hero";
 import type { EnemyEncounter } from "@core/types/enemy";
 import type { ObstacleInstance } from "@core/entities/obstacles/obstacleBase";
 import type { IEnemyBehavior } from "@core/entities/enemies/enemyBase";
+import type { SaveData, HeroSaveData } from "@core/types/save";
+import { createDefaultSaveData } from "@core/types/save";
 import { runMachine } from "./runMachine";
 import type { RunInput } from "./runMachine";
 import { BARBARIAN_HERO } from "@data/heroes/barbarian.data";
 import { BARBARIAN_CHAPTERS } from "@data/chapters/barbarian-chapters.data";
 import { wolfBehavior } from "@core/entities/enemies/wolf";
 import { generateLevel } from "@core/systems/levelGenerator";
+import { calculateRunReward } from "@core/systems/economy";
 import { Logger } from "@debug/Logger";
 
 // ─── Module Logger ───────────────────────────────────────────────────────────
@@ -48,6 +51,8 @@ export interface GameContext {
   lastRunResult: RunResult | null;
   /** Parameters for the next/active run — set on START_RUN, cleared on run end. */
   pendingRunConfig: PendingRunConfig | null;
+  /** Persisted player progression — currency, upgrades, chapter progress. */
+  saveData: SaveData;
 }
 
 export interface PendingRunConfig {
@@ -57,6 +62,28 @@ export interface PendingRunConfig {
   obstaclesBySegment: ObstacleInstance[][];
   enemyBehaviorFactory: (enemyId: string) => IEnemyBehavior;
   rngSeed?: number;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Returns a new SaveData with `amount` currency added to the given hero's
+ * balance. Creates the hero's save record if it doesn't exist yet.
+ */
+function addCurrencyToSave(save: SaveData, heroId: HeroId, amount: number): SaveData {
+  const existing = save.heroes[heroId];
+  const updated: HeroSaveData = existing
+    ? { ...existing, currency: existing.currency + amount }
+    : {
+        heroId,
+        currency: amount,
+        upgrades: {},
+        currentChapter: ChapterId.Chapter1,
+        chaptersCompleted: [],
+        coinsCollected: [],
+        prestigeCount: 0,
+      };
+  return { ...save, heroes: { ...save.heroes, [heroId]: updated } };
 }
 
 // ─── Machine ─────────────────────────────────────────────────────────────────
@@ -76,6 +103,7 @@ export const gameMachine = setup({
     selectedHeroId: null,
     lastRunResult: null,
     pendingRunConfig: null,
+    saveData: createDefaultSaveData(),
   },
   states: {
     titleScreen: {
@@ -145,8 +173,21 @@ export const gameMachine = setup({
         },
         onDone: {
           target: "results",
-          actions: assign({
-            lastRunResult: ({ event }) => event.output,
+          actions: assign(({ context, event }) => {
+            const rawResult = event.output as RunResult;
+            const breakdown = calculateRunReward(rawResult);
+            const resultWithReward: RunResult = {
+              ...rawResult,
+              currencyEarned: breakdown.total,
+            };
+            return {
+              lastRunResult: resultWithReward,
+              saveData: addCurrencyToSave(
+                context.saveData,
+                resultWithReward.heroId,
+                breakdown.total,
+              ),
+            };
           }),
         },
       },
@@ -154,8 +195,21 @@ export const gameMachine = setup({
       on: {
         END_RUN: {
           target: "results",
-          actions: assign({
-            lastRunResult: ({ event }) => event.result,
+          actions: assign(({ context, event }) => {
+            const rawResult = event.result;
+            const breakdown = calculateRunReward(rawResult);
+            const resultWithReward: RunResult = {
+              ...rawResult,
+              currencyEarned: breakdown.total,
+            };
+            return {
+              lastRunResult: resultWithReward,
+              saveData: addCurrencyToSave(
+                context.saveData,
+                resultWithReward.heroId,
+                breakdown.total,
+              ),
+            };
           }),
         },
       },

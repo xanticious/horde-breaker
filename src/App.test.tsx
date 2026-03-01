@@ -65,7 +65,10 @@ describe("App — screen navigation", () => {
     await user.click(screen.getByRole("button", { name: /start run/i }));
     await user.click(screen.getByRole("button", { name: /end run/i }));
 
-    expect(screen.getByRole("heading", { name: /run results/i })).toBeInTheDocument();
+    // The results heading is now dynamic — it shows "Fallen", "Victory!", or
+    // "Time's Up" depending on the run result. Check for the Continue button as
+    // a more stable navigation assertion.
+    expect(screen.getByRole("button", { name: /continue to upgrades/i })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /continue to upgrades/i }));
 
