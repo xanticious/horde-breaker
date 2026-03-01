@@ -1,6 +1,6 @@
 # Horde Breaker — Implementation Plan
 
-> **Last updated:** 2026-02-27
+> **Last updated:** 2026-03-01
 > **Methodology:** Agile — incremental delivery, always-shippable trunk
 > **Scope:** MVP (Milestone 1) — Barbarian Berzerker only
 > **Companion docs:** `DESIGN_NOTES.md`, `IMPLEMENTATION_DESIGN.md`
@@ -468,15 +468,15 @@
   - Input rejected during animation (commitment).
   - Duel ends when enemy HP reaches 0.
   - Duel ends when hero HP reaches 0.
-- [ ] **10.5** — Create `DuelScene` (`src/rendering/scenes/DuelScene.ts`):
+- [x] **10.5** — Create `DuelScene` (`src/rendering/scenes/DuelScene.ts`):
   - Hero on left, enemy on right. Placeholder sprites.
   - Enemy health bar above enemy.
-- [ ] **10.6** — Create `EnemyDisplay` (`src/rendering/display/EnemyDisplay.ts`):
+- [x] **10.6** — Create `EnemyDisplay` (`src/rendering/display/EnemyDisplay.ts`):
   - Placeholder sprite with position + stance rendering.
-- [ ] **10.7** — Create `HealthBar` display object (`src/rendering/display/HealthBar.ts`):
+- [x] **10.7** — Create `HealthBar` display object (`src/rendering/display/HealthBar.ts`):
   - PixiJS bar rendered above enemy.
-- [ ] **10.8** — Wire DuelScene into GameScreen — when GameMachine is in `run` state and a duel starts, switch from TraversalScene to DuelScene.
-- [ ] **10.9** — All scripts pass.
+- [x] **10.8** — Wire DuelScene into GameScreen — when GameMachine is in `run` state and a duel starts, switch from TraversalScene to DuelScene.
+- [x] **10.9** — All scripts pass.
 
 ### Acceptance Criteria
 
@@ -494,7 +494,7 @@
 
 ### Tasks
 
-- [ ] **11.1** — Create `RunMachine` (`src/core/machines/runMachine.ts`):
+- [x] **11.1** — Create `RunMachine` (`src/core/machines/runMachine.ts`):
   - States: `initializing`, `traversal`, `duel`, `death`, `victory`, `complete`.
   - Spawns `TraversalMachine` and `DuelMachine` as child actors.
   - Context: `heroId`, `chapter`, `currentHp`, `timer`, `distanceTravelled`, `enemyLayout`, `currentEncounterIndex`, `enemiesDefeated`, `duelDamageDealt`.
@@ -503,14 +503,14 @@
   - Transitions duel → traversal when duel is won.
   - Transitions to `death` when HP ≤ 0 or timer expires.
   - Transitions to `victory` when all encounters defeated (chapter cleared).
-- [ ] **11.2** — Write `runMachine.test.ts`:
+- [x] **11.2** — Write `runMachine.test.ts`:
   - Full run lifecycle: init → traversal → duel → traversal → death.
   - Timer expiry triggers death.
   - All encounters cleared triggers victory.
-- [ ] **11.3** — Update `GameMachine` to spawn `RunMachine` via `invoke` and receive `RUN_COMPLETE` on done.
-- [ ] **11.4** — Update `GameRenderer` to switch between `TraversalScene` and `DuelScene` based on run phase.
-- [ ] **11.5** — Verify: a complete run plays from start to finish, alternating traversal and duel, ending in death or victory.
-- [ ] **11.6** — All scripts pass.
+- [x] **11.3** — Update `GameMachine` to spawn `RunMachine` via `invoke` and receive `RUN_COMPLETE` on done.
+- [x] **11.4** — Update `GameRenderer` to switch between `TraversalScene` and `DuelScene` based on run phase.
+- [x] **11.5** — Verify: a complete run plays from start to finish, alternating traversal and duel, ending in death or victory.
+- [x] **11.6** — All scripts pass.
 
 ### Acceptance Criteria
 

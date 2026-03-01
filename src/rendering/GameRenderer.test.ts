@@ -4,14 +4,22 @@ import { GameRenderer } from "./GameRenderer";
 // TraversalScene uses PixiJS GPU APIs that jsdom cannot provide; mock the whole
 // module so GameRenderer tests remain focused on lifecycle behaviour.
 vi.mock("./scenes/TraversalScene", () => {
-  const TraversalScene = vi.fn().mockImplementation(function (
-    this: Record<string, unknown>,
-  ) {
-    this.container = { destroy: vi.fn() };
+  const TraversalScene = vi.fn().mockImplementation(function (this: Record<string, unknown>) {
+    this.container = { destroy: vi.fn(), visible: true };
     this.update = vi.fn();
     this.destroy = vi.fn();
   });
   return { TraversalScene };
+});
+
+// DuelScene similarly requires GPU APIs.
+vi.mock("./scenes/DuelScene", () => {
+  const DuelScene = vi.fn().mockImplementation(function (this: Record<string, unknown>) {
+    this.container = { destroy: vi.fn(), visible: true };
+    this.update = vi.fn();
+    this.destroy = vi.fn();
+  });
+  return { DuelScene };
 });
 
 // Also mock the data import that GameRenderer pulls in so tests need no real
@@ -25,20 +33,16 @@ vi.mock("@data/heroes/barbarian.data", () => ({
 // Mock the entire module so lifecycle tests run in the Vitest environment.
 // Using regular function constructors (not arrow functions) so `new Application()` works.
 vi.mock("pixi.js", () => {
-  const Application = vi.fn().mockImplementation(function (
-    this: Record<string, unknown>,
-  ) {
+  const Application = vi.fn().mockImplementation(function (this: Record<string, unknown>) {
     this.ticker = { add: vi.fn(), remove: vi.fn() };
-    this.stage = { addChild: vi.fn() };
+    this.stage = { addChild: vi.fn(), removeChild: vi.fn() };
     this.screen = { width: 800, height: 600 };
     this.canvas = document.createElement("canvas");
     this.init = vi.fn().mockResolvedValue(undefined);
     this.destroy = vi.fn();
   });
 
-  const Graphics = vi.fn().mockImplementation(function (
-    this: Record<string, unknown>,
-  ) {
+  const Graphics = vi.fn().mockImplementation(function (this: Record<string, unknown>) {
     this.rect = vi.fn().mockReturnThis();
     this.fill = vi.fn().mockReturnThis();
     this.pivot = { set: vi.fn() };
@@ -47,9 +51,7 @@ vi.mock("pixi.js", () => {
     this.rotation = 0;
   });
 
-  const Container = vi.fn().mockImplementation(function (
-    this: Record<string, unknown>,
-  ) {
+  const Container = vi.fn().mockImplementation(function (this: Record<string, unknown>) {
     this.addChild = vi.fn();
   });
 
@@ -110,9 +112,7 @@ describe("GameRenderer", () => {
     };
     const tickerAddCalls = appInstance.ticker.add.mock.calls;
     // The last ticker.add call is the game-loop callback registered by startGameLoop
-    const loopCb = tickerAddCalls[tickerAddCalls.length - 1][0] as (
-      t: { deltaMS: number },
-    ) => void;
+    const loopCb = tickerAddCalls[tickerAddCalls.length - 1][0] as (t: { deltaMS: number }) => void;
     loopCb({ deltaMS: 16.67 });
 
     expect(onUpdate).toHaveBeenCalledWith(16.67);
@@ -174,5 +174,27 @@ describe("GameRenderer", () => {
 
     renderer.destroy();
     expect(appInstance.destroy).toHaveBeenCalled();
+  });
+
+  // ---------------------------------------------------------------------------
+  // setMode() / setDuelContext()
+  // ---------------------------------------------------------------------------
+
+  it("setMode('traversal') does not throw before init", () => {
+    expect(() => renderer.setMode("traversal")).not.toThrow();
+  });
+
+  it("setMode('duel') with context does not throw before init", () => {
+    const mockCtx = { enemyId: "wolf", enemyHp: 40, enemyMaxHp: 40 };
+    expect(() =>
+      renderer.setMode("duel", mockCtx as Parameters<typeof renderer.setMode>[1]),
+    ).not.toThrow();
+  });
+
+  it("setDuelContext() does not throw", () => {
+    const mockCtx = { enemyId: "wolf", enemyHp: 40, enemyMaxHp: 40 };
+    expect(() =>
+      renderer.setDuelContext(mockCtx as Parameters<typeof renderer.setDuelContext>[0], "idle"),
+    ).not.toThrow();
   });
 });

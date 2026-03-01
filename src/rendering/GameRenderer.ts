@@ -1,9 +1,14 @@
 import { Application } from "pixi.js";
 import { TraversalScene } from "./scenes/TraversalScene";
+import { DuelScene } from "./scenes/DuelScene";
 import type { TraversalContext, TraversalEvent } from "@core/machines/traversalMachine";
+import type { DuelContext } from "@core/machines/duelMachine";
 import { BARBARIAN_HERO } from "@data/heroes/barbarian.data";
 
 export type UpdateCallback = (deltaMs: number) => void;
+
+/** Which scene is currently active in the renderer. */
+export type RendererMode = "traversal" | "duel";
 
 /**
  * Wraps PixiJS Application lifecycle.
@@ -13,6 +18,11 @@ export class GameRenderer {
   private app: Application | null = null;
   private tickerCallback: ((ticker: { deltaMS: number }) => void) | null = null;
   private traversalScene: TraversalScene | null = null;
+  private duelScene: DuelScene | null = null;
+  private _mode: RendererMode = "traversal";
+  // Latest duel snapshot — updated each frame by callers when in duel mode.
+  private _duelContext: DuelContext | null = null;
+  private _duelStateName: string = "idle";
   // Tracks whether destroy() was called before init() resolved, so the async
   // init path can detect the stale state and clean up the Application itself.
   private _destroyed = false;
@@ -37,6 +47,55 @@ export class GameRenderer {
    */
   setTraversalContext(context: TraversalContext): void {
     this._traversalContext = context;
+  }
+
+  /**
+   * Replace the renderer's duel snapshot with the latest DuelMachine context.
+   * Also records the current XState state name for enemy-phase colour mapping.
+   */
+  setDuelContext(context: DuelContext, stateName: string): void {
+    this._duelContext = context;
+    this._duelStateName = stateName;
+  }
+
+  /**
+   * Switch the active scene between traversal and duel.
+   *
+   * On first switch to "duel" the DuelScene is created using the provided
+   * initial context. Switching back to "traversal" hides the duel scene but
+   * keeps it alive so it can be reused if another duel starts in the same run.
+   * The existing DuelScene is replaced when a new context is supplied so that
+   * each new enemy encounter starts fresh.
+   */
+  setMode(mode: RendererMode, duelContext?: DuelContext): void {
+    if (!this.app) {
+      // Store the requested mode so init() can honour it if it resolves later.
+      this._mode = mode;
+      if (duelContext) this._duelContext = duelContext;
+      return;
+    }
+
+    if (mode === "duel" && duelContext) {
+      // Tear down any previous duel scene so enemy HP etc. resets for each encounter.
+      if (this.duelScene) {
+        this.app.stage.removeChild(this.duelScene.container);
+        this.duelScene.destroy();
+        this.duelScene = null;
+      }
+      this._duelContext = duelContext;
+      this.duelScene = new DuelScene(this.app, duelContext);
+      this.app.stage.addChild(this.duelScene.container);
+    }
+
+    // Toggle container visibility — cheaper than addChild/removeChild every frame.
+    if (this.traversalScene) {
+      this.traversalScene.container.visible = mode === "traversal";
+    }
+    if (this.duelScene) {
+      this.duelScene.container.visible = mode === "duel";
+    }
+
+    this._mode = mode;
   }
 
   /**
@@ -125,15 +184,26 @@ export class GameRenderer {
     this.tickerCallback = (ticker) => {
       const deltaMs = ticker.deltaMS;
 
-      // Render from the latest traversal snapshot. The machine remains the
-      // source of truth; rendering never mutates traversal state directly.
-      if (this.traversalScene && this.app) {
-        this.traversalScene.update(
-          this._traversalContext,
-          deltaMs,
-          this.app.screen.width,
-          this.app.screen.height,
-        );
+      if (this._mode === "traversal") {
+        // Render from the latest traversal snapshot. The machine remains the
+        // source of truth; rendering never mutates traversal state directly.
+        if (this.traversalScene && this.app) {
+          this.traversalScene.update(
+            this._traversalContext,
+            deltaMs,
+            this.app.screen.width,
+            this.app.screen.height,
+          );
+        }
+      } else if (this._mode === "duel") {
+        if (this.duelScene && this._duelContext && this.app) {
+          this.duelScene.update(
+            this._duelContext,
+            this._duelStateName,
+            this.app.screen.width,
+            this.app.screen.height,
+          );
+        }
       }
 
       onUpdate(deltaMs);
@@ -158,6 +228,9 @@ export class GameRenderer {
 
     this.traversalScene?.destroy();
     this.traversalScene = null;
+
+    this.duelScene?.destroy();
+    this.duelScene = null;
 
     // true = remove canvas from DOM; true = destroy children, textures, context
     this.app.destroy(true, true);

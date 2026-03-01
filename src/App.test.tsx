@@ -10,6 +10,8 @@ vi.mock("@rendering/GameRenderer", () => {
   const GameRenderer = vi.fn().mockImplementation(function (this: Record<string, unknown>) {
     this.init = vi.fn().mockResolvedValue(undefined);
     this.setTraversalContext = vi.fn();
+    this.setDuelContext = vi.fn();
+    this.setMode = vi.fn();
     this.startGameLoop = vi.fn();
     this.destroy = vi.fn();
   });

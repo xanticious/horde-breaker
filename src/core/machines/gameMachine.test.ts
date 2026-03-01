@@ -1,8 +1,33 @@
 import { createActor } from "xstate";
 import { describe, it, expect, beforeEach } from "vitest";
 import { gameMachine } from "./gameMachine";
+import type { GameEvent } from "./gameMachine";
 import { HeroId } from "@core/types/hero";
+import { ChapterId } from "@core/types/chapter";
+import { EnemyId } from "@core/types/enemy";
 import type { RunResult } from "@core/types/run";
+
+const MOCK_START_RUN: Extract<GameEvent, { type: "START_RUN" }> = {
+  type: "START_RUN",
+  chapter: ChapterId.Chapter1,
+  heroStats: {
+    maxHp: 100,
+    armor: 0,
+    runSpeed: 200,
+    damageMultiplier: 1,
+    attackSpeed: 1,
+    specialAbility: { damage: 0, cooldownMs: 0, durationMs: 0 },
+  },
+  // One encounter at 50% so the run doesn't resolve immediately in tests.
+  enemyLayout: [{ enemyId: EnemyId.Wolf, positionPercent: 50, isBoss: false }],
+  obstaclesBySegment: [],
+  enemyBehaviorFactory: () => ({
+    decideAction: () => ({ type: "wait" }) as const,
+    getWindUpDuration: () => 500,
+    getRecoveryDuration: () => 300,
+  }),
+  rngSeed: 1,
+};
 
 const MOCK_RUN_RESULT: RunResult = {
   heroId: HeroId.Barbarian,
@@ -49,7 +74,7 @@ describe("gameMachine", () => {
     it("ignores irrelevant events in titleScreen", () => {
       const actor = createActor(gameMachine);
       actor.start();
-      actor.send({ type: "START_RUN" });
+      actor.send(MOCK_START_RUN);
       expect(actor.getSnapshot().value).toBe("titleScreen");
     });
   });
@@ -70,7 +95,7 @@ describe("gameMachine", () => {
       const actor = createActor(gameMachine);
       actor.start();
       actor.send({ type: "START_GAME" });
-      actor.send({ type: "START_RUN" });
+      actor.send(MOCK_START_RUN);
       expect(actor.getSnapshot().value).toBe("heroSelect");
     });
   });
@@ -86,7 +111,7 @@ describe("gameMachine", () => {
     });
 
     it("transitions to run on START_RUN", () => {
-      actor.send({ type: "START_RUN" });
+      actor.send(MOCK_START_RUN);
       expect(actor.getSnapshot().value).toBe("run");
     });
 
@@ -109,7 +134,7 @@ describe("gameMachine", () => {
       actor.start();
       actor.send({ type: "START_GAME" });
       actor.send({ type: "SELECT_HERO", heroId: HeroId.Barbarian });
-      actor.send({ type: "START_RUN" });
+      actor.send(MOCK_START_RUN);
     });
 
     it("transitions to results on END_RUN and stores result", () => {
@@ -134,7 +159,7 @@ describe("gameMachine", () => {
       actor.start();
       actor.send({ type: "START_GAME" });
       actor.send({ type: "SELECT_HERO", heroId: HeroId.Barbarian });
-      actor.send({ type: "START_RUN" });
+      actor.send(MOCK_START_RUN);
       actor.send({ type: "END_RUN", result: MOCK_RUN_RESULT });
     });
 
@@ -160,7 +185,7 @@ describe("gameMachine", () => {
       expect(actor.getSnapshot().value).toBe("upgrade");
 
       // First run
-      actor.send({ type: "START_RUN" });
+      actor.send(MOCK_START_RUN);
       expect(actor.getSnapshot().value).toBe("run");
       actor.send({ type: "END_RUN", result: MOCK_RUN_RESULT });
       expect(actor.getSnapshot().value).toBe("results");
@@ -168,7 +193,7 @@ describe("gameMachine", () => {
       expect(actor.getSnapshot().value).toBe("upgrade");
 
       // Second run
-      actor.send({ type: "START_RUN" });
+      actor.send(MOCK_START_RUN);
       expect(actor.getSnapshot().value).toBe("run");
       actor.send({ type: "END_RUN", result: MOCK_RUN_RESULT });
       expect(actor.getSnapshot().value).toBe("results");
